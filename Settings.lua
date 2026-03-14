@@ -84,6 +84,16 @@ local function CreateSettingsPanel()
     -- Track edit boxes so Reset All can update them
     local editBoxes = {}
 
+    -- Populates every edit box from the current effective duration.
+    -- Called on creation and via OnShow.
+    local function RefreshAllEditBoxes()
+        for _, cd in ipairs(CT.COOLDOWNS) do
+            if editBoxes[cd.id] then
+                editBoxes[cd.id]:SetText(tostring(GetEffectiveDuration(cd)))
+            end
+        end
+    end
+
     for i, cd in ipairs(CT.COOLDOWNS) do
         local yOff = -((i - 1) * (PANEL_ROW_HEIGHT + PANEL_ROW_PAD))
 
@@ -132,8 +142,8 @@ local function CreateSettingsPanel()
         editBox:SetSize(EDIT_WIDTH, 24)
         editBox:SetPoint("LEFT", row, "LEFT", 280, 0)
         editBox:SetAutoFocus(false)
-        editBox:SetNumeric(true)
         editBox:SetMaxLetters(4)
+        -- Plain text mode — SetNumeric causes SetText to be unreliable
         editBox:SetText(tostring(GetEffectiveDuration(cd)))
 
         local function CommitEdit()
@@ -195,15 +205,11 @@ local function CreateSettingsPanel()
         print("|cffaaddff[CooldownTracker]|r All durations reset to defaults.")
     end)
 
-    -- Refresh all edit boxes every time the panel is shown, ensuring they
-    -- are always populated (avoids blank boxes from init-time focus events).
-    panel:SetScript("OnShow", function()
-        for _, cd in ipairs(CT.COOLDOWNS) do
-            if editBoxes[cd.id] then
-                editBoxes[cd.id]:SetText(tostring(GetEffectiveDuration(cd)))
-            end
-        end
-    end)
+    -- Refresh on show (belt-and-suspenders alongside the direct call below)
+    panel:SetScript("OnShow", RefreshAllEditBoxes)
+
+    -- Populate all boxes immediately at creation time
+    RefreshAllEditBoxes()
 
     return panel
 end
