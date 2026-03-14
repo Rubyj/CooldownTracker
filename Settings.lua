@@ -36,8 +36,8 @@ end
 local PANEL_ROW_HEIGHT = 42
 local PANEL_ROW_PAD    = 2
 local ICON_SIZE        = 28
-local EDIT_WIDTH       = 64
-local CONTENT_WIDTH    = 520  -- fixed width; the Settings canvas is ~550px
+local EDIT_WIDTH       = 80
+local CONTENT_WIDTH    = 520
 
 local function CreateSettingsPanel()
     local panel = CreateFrame("Frame")
@@ -51,7 +51,7 @@ local function CreateSettingsPanel()
     local desc = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
     desc:SetWidth(CONTENT_WIDTH)
-    desc:SetText("Override cooldown durations to match your raiders' current talents.\nPress Enter in a duration box to confirm. Changes apply immediately.")
+    desc:SetText("Override cooldown durations to match your raiders' current talents.\nType a new value and press Enter to confirm. Changes apply immediately.")
     desc:SetJustifyH("LEFT")
 
     -- Column header labels
@@ -81,17 +81,22 @@ local function CreateSettingsPanel()
     content:SetSize(CONTENT_WIDTH, contentHeight)
     scrollFrame:SetScrollChild(content)
 
-    -- Track edit boxes so Reset All can update them
+    -- Track edit boxes so Reset All / refresh can update them
     local editBoxes = {}
 
-    -- Populates every edit box from the current effective duration.
-    -- Called on creation and via OnShow.
+    -- Populates every edit box. Uses C_Timer.After(0) to defer to next frame,
+    -- because WoW's Settings canvas clears EditBox text during its own show
+    -- sequence, so we must run AFTER that completes.
     local function RefreshAllEditBoxes()
-        for _, cd in ipairs(CT.COOLDOWNS) do
-            if editBoxes[cd.id] then
-                editBoxes[cd.id]:SetText(tostring(GetEffectiveDuration(cd)))
+        C_Timer.After(0, function()
+            for _, cd in ipairs(CT.COOLDOWNS) do
+                local eb = editBoxes[cd.id]
+                if eb then
+                    eb:SetText(tostring(GetEffectiveDuration(cd)))
+                    eb:SetCursorPosition(0)
+                end
             end
-        end
+        end)
     end
 
     for i, cd in ipairs(CT.COOLDOWNS) do
@@ -137,13 +142,11 @@ local function CreateSettingsPanel()
         classLabel:SetText(cd.class)
         classLabel:SetTextColor(cd.r, cd.g, cd.b)
 
-        -- Duration edit box — built manually (no template) to avoid
-        -- InputBoxTemplate's OnShow clearing our text.
+        -- Duration edit box — built manually to avoid template init issues
         local editBox = CreateFrame("EditBox", "CTSettingsEdit_" .. cd.id, row, "BackdropTemplate")
         editBox:SetSize(EDIT_WIDTH, 24)
         editBox:SetPoint("LEFT", row, "LEFT", 280, 0)
         editBox:SetAutoFocus(false)
-        editBox:SetMaxLetters(4)
         editBox:SetFontObject("ChatFontNormal")
         editBox:SetJustifyH("CENTER")
         if editBox.SetBackdrop then
@@ -156,12 +159,10 @@ local function CreateSettingsPanel()
             editBox:SetBackdropColor(0.1, 0.1, 0.1, 0.8)
             editBox:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
         end
-        editBox:SetTextInsets(4, 4, 2, 2)
-        editBox:SetText(tostring(GetEffectiveDuration(cd)))
-        -- Re-populate after any inherited show handlers fire
-        editBox:HookScript("OnShow", function(self)
-            self:SetText(tostring(GetEffectiveDuration(cd)))
-        end)
+        editBox:SetTextInsets(6, 6, 2, 2)
+
+        -- Text is set by RefreshAllEditBoxes via C_Timer.After — not here,
+        -- because anything set here gets wiped by the Settings canvas.
 
         local function CommitEdit()
             local val = tonumber(editBox:GetText())
@@ -198,9 +199,8 @@ local function CreateSettingsPanel()
         editBox:SetScript("OnEnter", function()
             GameTooltip:SetOwner(editBox, "ANCHOR_RIGHT")
             GameTooltip:SetText("Cooldown Duration")
-            GameTooltip:AddLine("Enter the cooldown in seconds.", 1, 1, 1)
+            GameTooltip:AddLine("Type a duration in seconds and press Enter.", 1, 1, 1)
             GameTooltip:AddLine(string.format("Default: %d seconds", cd.defaultDuration), 0.8, 0.8, 0.8)
-            GameTooltip:AddLine("Press Enter to confirm, Escape to cancel.", 0.6, 0.6, 0.6)
             GameTooltip:Show()
         end)
         editBox:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -222,11 +222,8 @@ local function CreateSettingsPanel()
         print("|cffaaddff[CooldownTracker]|r All durations reset to defaults.")
     end)
 
-    -- Refresh on show (belt-and-suspenders alongside the direct call below)
+    -- When the Settings canvas shows our panel, wait one frame then fill boxes
     panel:SetScript("OnShow", RefreshAllEditBoxes)
-
-    -- Populate all boxes immediately at creation time
-    RefreshAllEditBoxes()
 
     return panel
 end
