@@ -37,9 +37,9 @@ local PANEL_ROW_HEIGHT = 42
 local PANEL_ROW_PAD    = 2
 local ICON_SIZE        = 28
 local EDIT_WIDTH       = 64
+local CONTENT_WIDTH    = 520  -- fixed width; the Settings canvas is ~550px
 
 local function CreateSettingsPanel()
-    -- WoW hands this frame to the Settings system; it should be unsized here.
     local panel = CreateFrame("Frame")
     panel.name  = "Healer Cooldown Tracker"
 
@@ -50,6 +50,7 @@ local function CreateSettingsPanel()
 
     local desc = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
+    desc:SetWidth(CONTENT_WIDTH)
     desc:SetText("Override cooldown durations to match your raiders' current talents.\nPress Enter in a duration box to confirm. Changes apply immediately.")
     desc:SetJustifyH("LEFT")
 
@@ -66,21 +67,18 @@ local function CreateSettingsPanel()
 
     local divider = panel:CreateTexture(nil, "ARTWORK")
     divider:SetHeight(1)
-    divider:SetPoint("TOPLEFT",  desc, "BOTTOMLEFT",  0, -26)
-    divider:SetPoint("TOPRIGHT", panel, "TOPRIGHT",  -16, -26 - desc:GetHeight() - title:GetHeight() - 22)
-    -- Fix: anchor relative to a known point
-    divider:SetPoint("TOPLEFT",  hdrAbility, "BOTTOMLEFT",  -ICON_SIZE - 12, -4)
-    divider:SetPoint("TOPRIGHT", panel,      "TOPRIGHT",    -16,             0)
+    divider:SetPoint("TOPLEFT",  hdrAbility, "BOTTOMLEFT", -ICON_SIZE - 12, -4)
+    divider:SetWidth(CONTENT_WIDTH)
     divider:SetColorTexture(0.3, 0.3, 0.4, 0.6)
 
     -- ----- Scroll frame -----------------------------------------------------
     local scrollFrame = CreateFrame("ScrollFrame", "CTSettingsScrollFrame", panel, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT",  divider,  "BOTTOMLEFT",  0,   -6)
+    scrollFrame:SetPoint("TOPLEFT", divider, "BOTTOMLEFT", 0, -6)
     scrollFrame:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -28, 50)
 
     local contentHeight = #CT.COOLDOWNS * (PANEL_ROW_HEIGHT + PANEL_ROW_PAD)
     local content = CreateFrame("Frame", nil, scrollFrame)
-    content:SetSize(scrollFrame:GetWidth() or 560, contentHeight)
+    content:SetSize(CONTENT_WIDTH, contentHeight)
     scrollFrame:SetScrollChild(content)
 
     -- Track edit boxes so Reset All can update them
@@ -90,8 +88,9 @@ local function CreateSettingsPanel()
         local yOff = -((i - 1) * (PANEL_ROW_HEIGHT + PANEL_ROW_PAD))
 
         local row = CreateFrame("Frame", nil, content)
-        row:SetSize(content:GetWidth(), PANEL_ROW_HEIGHT)
-        row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, yOff)
+        row:SetHeight(PANEL_ROW_HEIGHT)
+        row:SetPoint("TOPLEFT",  content, "TOPLEFT",  0, yOff)
+        row:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, yOff)
 
         -- Alternating background
         local bg = row:CreateTexture(nil, "BACKGROUND")
