@@ -170,12 +170,13 @@ local function CreateSettingsPanel()
                 CooldownTrackerDB.customDurations = CooldownTrackerDB.customDurations or {}
                 CooldownTrackerDB.customDurations[cd.id] = (val ~= cd.defaultDuration) and val or nil
                 cd.duration = val
-            else
-                editBox:SetText(tostring(GetEffectiveDuration(cd)))
             end
-            editBox:ClearFocus()
         end
-        editBox:SetScript("OnEnterPressed", CommitEdit)
+        editBox:SetScript("OnTextChanged", function(self, userInput)
+            -- Only commit on actual keystrokes, not programmatic SetText
+            if userInput then CommitEdit() end
+        end)
+        editBox:SetScript("OnEnterPressed", function() editBox:ClearFocus() end)
         editBox:SetScript("OnEscapePressed", function()
             editBox:SetText(tostring(GetEffectiveDuration(cd)))
             editBox:ClearFocus()
