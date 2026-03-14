@@ -152,7 +152,6 @@ local function CreateSettingsPanel()
             editBox:SetText(tostring(GetEffectiveDuration(cd)))
             editBox:ClearFocus()
         end)
-        editBox:SetScript("OnEditFocusLost", CommitEdit)
 
         editBoxes[cd.id] = editBox
 
@@ -194,6 +193,16 @@ local function CreateSettingsPanel()
             end
         end
         print("|cffaaddff[CooldownTracker]|r All durations reset to defaults.")
+    end)
+
+    -- Refresh all edit boxes every time the panel is shown, ensuring they
+    -- are always populated (avoids blank boxes from init-time focus events).
+    panel:SetScript("OnShow", function()
+        for _, cd in ipairs(CT.COOLDOWNS) do
+            if editBoxes[cd.id] then
+                editBoxes[cd.id]:SetText(tostring(GetEffectiveDuration(cd)))
+            end
+        end
     end)
 
     return panel
