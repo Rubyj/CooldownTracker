@@ -137,14 +137,31 @@ local function CreateSettingsPanel()
         classLabel:SetText(cd.class)
         classLabel:SetTextColor(cd.r, cd.g, cd.b)
 
-        -- Duration edit box
-        local editBox = CreateFrame("EditBox", "CTSettingsEdit_" .. cd.id, row, "InputBoxTemplate")
+        -- Duration edit box — built manually (no template) to avoid
+        -- InputBoxTemplate's OnShow clearing our text.
+        local editBox = CreateFrame("EditBox", "CTSettingsEdit_" .. cd.id, row, "BackdropTemplate")
         editBox:SetSize(EDIT_WIDTH, 24)
         editBox:SetPoint("LEFT", row, "LEFT", 280, 0)
         editBox:SetAutoFocus(false)
         editBox:SetMaxLetters(4)
-        -- Plain text mode — SetNumeric causes SetText to be unreliable
+        editBox:SetFontObject("ChatFontNormal")
+        editBox:SetJustifyH("CENTER")
+        if editBox.SetBackdrop then
+            editBox:SetBackdrop({
+                bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+                edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+                tile     = true, tileSize = 16, edgeSize = 12,
+                insets   = { left = 3, right = 3, top = 3, bottom = 3 },
+            })
+            editBox:SetBackdropColor(0.1, 0.1, 0.1, 0.8)
+            editBox:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
+        end
+        editBox:SetTextInsets(4, 4, 2, 2)
         editBox:SetText(tostring(GetEffectiveDuration(cd)))
+        -- Re-populate after any inherited show handlers fire
+        editBox:HookScript("OnShow", function(self)
+            self:SetText(tostring(GetEffectiveDuration(cd)))
+        end)
 
         local function CommitEdit()
             local val = tonumber(editBox:GetText())
