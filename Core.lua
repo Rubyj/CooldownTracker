@@ -6,6 +6,7 @@
 -- Slash commands:
 --   /cdt              — toggle the tracker window
 --   /cdt reset        — reset all running timers
+--   /cdt settings     — open the settings panel
 --------------------------------------------------------------------------------
 
 local AddonName, CT = ...
@@ -25,6 +26,8 @@ eventFrame:SetScript("OnEvent", function(_, event, name)
         -- Build the UI (defined in UI.lua) then restore the saved position
         CT:BuildUI()
         CT:RestorePosition()
+        -- Register the settings panel (defined in Settings.lua)
+        CT:InitSettings()
     end
 end)
 
@@ -40,6 +43,8 @@ SlashCmdList["COOLDOWNTRACKER"] = function(msg)
             CT.activeTimers[cd.id] = nil
         end
         print("|cffaaddff[CooldownTracker]|r All timers reset.")
+    elseif cmd == "settings" then
+        CT:OpenSettings()
     else
         if CT.mainFrame:IsShown() then
             CT.mainFrame:Hide()
