@@ -7,6 +7,7 @@
 --   /cdt              — toggle the tracker window
 --   /cdt reset        — reset all running timers
 --   /cdt settings     — open the settings panel
+--   /cdt columns N    — set grid columns (1-9)
 --------------------------------------------------------------------------------
 
 local AddonName, CT = ...
@@ -45,6 +46,15 @@ SlashCmdList["COOLDOWNTRACKER"] = function(msg)
         print("|cffaaddff[CooldownTracker]|r All timers reset.")
     elseif cmd == "settings" then
         CT:OpenSettings()
+    elseif cmd:match("^columns%s+(%d+)$") then
+        local n = tonumber(cmd:match("^columns%s+(%d+)$"))
+        if n and n >= 1 and n <= 9 then
+            CooldownTrackerDB.columns = n
+            CT:LayoutRows()
+            print("|cffaaddff[CooldownTracker]|r Columns set to " .. n .. ".")
+        else
+            print("|cffaaddff[CooldownTracker]|r Usage: /cdt columns <1-9>")
+        end
     else
         if CT.mainFrame:IsShown() then
             CT.mainFrame:Hide()

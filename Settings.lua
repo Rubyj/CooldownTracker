@@ -51,12 +51,73 @@ local function CreateSettingsPanel()
     local desc = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
     desc:SetWidth(CONTENT_WIDTH)
-    desc:SetText("Override cooldown durations to match your raiders' current talents.\nType a new value and press Enter to confirm. Changes apply immediately.")
+    desc:SetText("Configure the layout and cooldown durations.")
     desc:SetJustifyH("LEFT")
 
-    -- Column header labels
+    -- ----- Layout section ---------------------------------------------------
+    local layoutSection = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+    layoutSection:SetPoint("TOPLEFT", desc, "BOTTOMLEFT", 0, -12)
+    layoutSection:SetText("|cffaaddffLayout|r")
+
+    local colLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    colLabel:SetPoint("TOPLEFT", layoutSection, "BOTTOMLEFT", 0, -6)
+    colLabel:SetText("Columns:")
+
+    local colBox = CreateFrame("EditBox", "CTSettingsColBox", panel, "BackdropTemplate")
+    colBox:SetSize(50, 24)
+    colBox:SetPoint("LEFT", colLabel, "RIGHT", 8, 0)
+    colBox:SetAutoFocus(false)
+    colBox:SetFontObject("ChatFontNormal")
+    colBox:SetJustifyH("CENTER")
+    if colBox.SetBackdrop then
+        colBox:SetBackdrop({
+            bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true, tileSize = 16, edgeSize = 12,
+            insets = { left = 3, right = 3, top = 3, bottom = 3 },
+        })
+        colBox:SetBackdropColor(0.1, 0.1, 0.1, 0.8)
+        colBox:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
+    end
+    colBox:SetTextInsets(4, 4, 2, 2)
+
+    local colHint = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    colHint:SetPoint("LEFT", colBox, "RIGHT", 10, 0)
+    colHint:SetText("1 = vertical stack, 2-9 = grid layout")
+    colHint:SetTextColor(0.6, 0.6, 0.6)
+
+    colBox:SetScript("OnTextChanged", function(self, userInput)
+        if not userInput then return end
+        local val = tonumber(self:GetText())
+        if val and val >= 1 and val <= 9 then
+            CooldownTrackerDB.columns = val
+            if CT.LayoutRows then CT:LayoutRows() end
+        end
+    end)
+    colBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+    colBox:SetScript("OnEscapePressed", function(self)
+        self:SetText(tostring(CooldownTrackerDB.columns or 1))
+        self:ClearFocus()
+    end)
+    colBox:SetScript("OnEnter", function()
+        GameTooltip:SetOwner(colBox, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Grid Columns")
+        GameTooltip:AddLine("1 = single vertical column (default)", 1, 1, 1)
+        GameTooltip:AddLine("2-9 = compact card grid with that many columns", 0.8, 0.8, 0.8)
+        GameTooltip:AddLine("Changes apply instantly to the tracker window.", 0.6, 0.6, 0.6)
+        GameTooltip:Show()
+    end)
+    colBox:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    local layoutDivider = panel:CreateTexture(nil, "ARTWORK")
+    layoutDivider:SetHeight(1)
+    layoutDivider:SetPoint("TOPLEFT", colLabel, "BOTTOMLEFT", 0, -10)
+    layoutDivider:SetWidth(CONTENT_WIDTH)
+    layoutDivider:SetColorTexture(0.3, 0.3, 0.4, 0.4)
+
+    -- ----- Cooldown duration headers ----------------------------------------
     local hdrAbility = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
-    hdrAbility:SetPoint("TOPLEFT", desc, "BOTTOMLEFT", ICON_SIZE + 12, -10)
+    hdrAbility:SetPoint("TOPLEFT", layoutDivider, "BOTTOMLEFT", ICON_SIZE + 12, -8)
     hdrAbility:SetText("Ability")
     hdrAbility:SetTextColor(0.7, 0.7, 0.7)
 
@@ -70,6 +131,13 @@ local function CreateSettingsPanel()
     divider:SetPoint("TOPLEFT",  hdrAbility, "BOTTOMLEFT", -ICON_SIZE - 12, -4)
     divider:SetWidth(CONTENT_WIDTH)
     divider:SetColorTexture(0.3, 0.3, 0.4, 0.6)
+
+    -- refresh colBox on panel show
+    local origOnShow = panel:GetScript("OnShow")
+    panel:SetScript("OnShow", function(self)
+        colBox:SetText(tostring(CooldownTrackerDB.columns or 1))
+        if origOnShow then origOnShow(self) end
+    end)
 
     -- ----- Scroll frame -----------------------------------------------------
     local scrollFrame = CreateFrame("ScrollFrame", "CTSettingsScrollFrame", panel, "UIPanelScrollFrameTemplate")
@@ -235,6 +303,7 @@ end
 
 function CT:InitSettings()
     CooldownTrackerDB.customDurations = CooldownTrackerDB.customDurations or {}
+    CooldownTrackerDB.columns         = CooldownTrackerDB.columns or 1
     ApplyCustomDurations()
 
     local panel   = CreateSettingsPanel()
