@@ -212,6 +212,7 @@ local function CreateRow(parent, cd)
     row.classLabel = classLabel
 
     local timerLabel = row:CreateFontString(nil, "OVERLAY")
+    timerLabel:SetFont("Fonts\\FRIZQT__.TTF", 13, "OUTLINE")
     timerLabel:SetText("|cff00ff00Ready|r")
     row.timerLabel = timerLabel
 
