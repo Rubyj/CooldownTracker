@@ -221,17 +221,29 @@ local function CreateSettingsPanel()
     divider:SetWidth(CONTENT_WIDTH)
     divider:SetColorTexture(0.3, 0.3, 0.4, 0.6)
 
-    -- refresh colBox on panel show
-    -- local origOnShow = panel:GetScript("OnShow") -- This was removed as it's no longer needed.
-    panel:SetScript("OnShow", function(self)
-        -- Refresh all boxes on panel show (deferred one frame so Settings canvas doesn't wipe them)
+    -- editBoxes and RefreshAllEditBoxes must be declared here so the OnShow
+    -- closure below can reference them (Lua requires locals before use).
+    local editBoxes = {}
+    local function RefreshAllEditBoxes()
+        C_Timer.After(0, function()
+            for _, cd in ipairs(CT.COOLDOWNS) do
+                local eb = editBoxes[cd.id]
+                if eb then
+                    eb:SetText(tostring(GetEffectiveDuration(cd)))
+                    eb:SetCursorPosition(0)
+                end
+            end
+        end)
+    end
+
+    -- refresh all boxes on panel show (deferred so Settings canvas doesn't wipe them)
+    panel:SetScript("OnShow", function()
         C_Timer.After(0, function()
             colBox:SetText(tostring(CooldownTrackerDB.columns or 1))
             local counts = CooldownTrackerDB.classCounts or {}
             for clsName, box in pairs(classCountBoxes) do
                 box:SetText(tostring(counts[clsName] or 1))
             end
-            -- Call the original refresh for duration edit boxes
             RefreshAllEditBoxes()
         end)
     end)
@@ -245,24 +257,6 @@ local function CreateSettingsPanel()
     local content = CreateFrame("Frame", nil, scrollFrame)
     content:SetSize(CONTENT_WIDTH, contentHeight)
     scrollFrame:SetScrollChild(content)
-
-    -- Track edit boxes so Reset All / refresh can update them
-    local editBoxes = {}
-
-    -- Populates every edit box. Uses C_Timer.After(0) to defer to next frame,
-    -- because WoW's Settings canvas clears EditBox text during its own show
-    -- sequence, so we must run AFTER that completes.
-    local function RefreshAllEditBoxes()
-        C_Timer.After(0, function()
-            for _, cd in ipairs(CT.COOLDOWNS) do
-                local eb = editBoxes[cd.id]
-                if eb then
-                    eb:SetText(tostring(GetEffectiveDuration(cd)))
-                    eb:SetCursorPosition(0)
-                end
-            end
-        end)
-    end
 
     for i, cd in ipairs(CT.COOLDOWNS) do
         local yOff = -((i - 1) * (PANEL_ROW_HEIGHT + PANEL_ROW_PAD))
