@@ -295,26 +295,58 @@ end
 
 -- ---------------------------------------------------------------------------
 -- Public: CT:RebuildUI()
--- Called when class counts change: hides old rows, rebuilds the expanded
--- cooldown list, creates fresh rows, and re-layouts.
+-- Safe to call at any time (including from OnTextChanged).
+-- Reconfigures the existing pre-allocated frame pool — no SetParent or
+-- CreateFrame calls at runtime, which avoids WoW taint errors.
 -- ---------------------------------------------------------------------------
 function CT:RebuildUI()
-    -- Hide all existing row frames (WoW can't truly destroy frames)
-    for _, row in pairs(CT.rows) do
-        row:Hide()
-        row:SetParent(nil)
-    end
-    CT.rows        = {}
     CT.activeTimers = {}
-
     CT:BuildExpandedCooldowns()
 
-    for _, cd in ipairs(CT.expandedCooldowns) do
-        CreateRow(CT.mainFrame, cd)
+    -- Reconfigure visible pool frames for the new expanded list
+    for i, cd in ipairs(CT.expandedCooldowns) do
+        local row = CT.pool[i]
+        if row then
+            row:Show()
+            -- Rebind the cooldown data and display
+            row.cd = cd
+            row.strip:SetColorTexture(cd.r, cd.g, cd.b, 0.9)
+            row.iconTex:SetTexture(cd.icon)
+            row.nameLabel:SetText(cd.name)
+            row.nameLabel:SetTextColor(1, 1, 1)
+            row.classLabel:SetText(cd.class)
+            row.classLabel:SetTextColor(cd.r, cd.g, cd.b)
+            row.timerLabel:SetText("|cff00ff00Ready|r")
+            row.barFill:SetVertexColor(cd.r, cd.g, cd.b)
+            row.button:SetText("Used")
+            SetBtnColor(row.button, 0.3, 0.85, 0.3)
+            -- Rebind button click to new cd
+            row.button:SetScript("OnClick", function()
+                if CT.activeTimers[cd.id] then
+                    CT.activeTimers[cd.id] = nil
+                else
+                    CT.activeTimers[cd.id] = GetTime() + cd.duration
+                end
+                UpdateRow(row, GetTime())
+            end)
+            CT.rows[cd.id] = row
+        end
+    end
+
+    -- Hide unused pool frames beyond the new count
+    for i = #CT.expandedCooldowns + 1, #CT.pool do
+        CT.pool[i]:Hide()
+    end
+
+    -- Rebuild rows lookup (only active entries)
+    CT.rows = {}
+    for i, cd in ipairs(CT.expandedCooldowns) do
+        CT.rows[cd.id] = CT.pool[i]
     end
 
     CT:LayoutRows()
 end
+
 
 -- ---------------------------------------------------------------------------
 -- Public: CT:LayoutRows()
@@ -441,9 +473,26 @@ function CT:BuildUI()
     divider:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, -TITLE_HEIGHT)
     divider:SetColorTexture(0.3, 0.3, 0.5, 0.6)
 
-    -- Create all rows (layout applied below)
-    for _, cd in ipairs(CT.expandedCooldowns) do
-        CreateRow(f, cd)
+    -- Pre-allocate the maximum possible row pool at load time.
+    -- Max = base cooldown count × 5 (max class count per class).
+    -- This avoids CreateFrame/SetParent calls at runtime (which cause taint).
+    CT.pool = {}
+    local maxRows = #CT.COOLDOWNS * 5
+    -- Use expandedCooldowns for the first N frames, dummy cd for the rest.
+    local dummyCd = CT.COOLDOWNS[1]
+    for i = 1, maxRows do
+        local cd = CT.expandedCooldowns[i] or dummyCd
+        local row = CreateRow(f, cd)
+        CT.pool[i] = row
+        if not CT.expandedCooldowns[i] then
+            row:Hide()
+        end
+    end
+
+    -- Build CT.rows from the initial expanded list
+    CT.rows = {}
+    for i, cd in ipairs(CT.expandedCooldowns) do
+        CT.rows[cd.id] = CT.pool[i]
     end
 
     f:SetScript("OnUpdate", function() CT:UpdateAllRows() end)
@@ -453,3 +502,4 @@ function CT:BuildUI()
     -- Apply layout (reads CooldownTrackerDB.columns, defaults to 1)
     CT:LayoutRows()
 end
+
