@@ -402,5 +402,7 @@ function CT:InitSettings()
 end
 
 function CT:OpenSettings()
-    print("|cffaaddff[CooldownTracker]|r Open settings via: |cffffffffEscape → Options → AddOns → Healer Cooldown Tracker|r")
+    if CT.settingsCategory then
+        Settings.OpenToCategory(CT.settingsCategory:GetID())
+    end
 end
