@@ -269,13 +269,61 @@ local function CreateRow(parent, cd)
 end
 
 -- ---------------------------------------------------------------------------
+-- Public: CT:BuildExpandedCooldowns()
+-- Populates CT.expandedCooldowns from CT.COOLDOWNS + class counts.
+--   count=1: original entry unchanged (no "#N" suffix)
+--   count>1: N copies with unique IDs and "#N" appended to name
+-- ---------------------------------------------------------------------------
+function CT:BuildExpandedCooldowns()
+    local counts = CooldownTrackerDB.classCounts or {}
+    CT.expandedCooldowns = {}
+    for _, cd in ipairs(CT.COOLDOWNS) do
+        local count = math.max(1, math.min(5, counts[cd.class] or 1))
+        if count == 1 then
+            table.insert(CT.expandedCooldowns, cd)
+        else
+            for n = 1, count do
+                local copy = {}
+                for k, v in pairs(cd) do copy[k] = v end
+                copy.id   = cd.id .. "_" .. n
+                copy.name = cd.name .. " #" .. n
+                table.insert(CT.expandedCooldowns, copy)
+            end
+        end
+    end
+end
+
+-- ---------------------------------------------------------------------------
+-- Public: CT:RebuildUI()
+-- Called when class counts change: hides old rows, rebuilds the expanded
+-- cooldown list, creates fresh rows, and re-layouts.
+-- ---------------------------------------------------------------------------
+function CT:RebuildUI()
+    -- Hide all existing row frames (WoW can't truly destroy frames)
+    for _, row in pairs(CT.rows) do
+        row:Hide()
+        row:SetParent(nil)
+    end
+    CT.rows        = {}
+    CT.activeTimers = {}
+
+    CT:BuildExpandedCooldowns()
+
+    for _, cd in ipairs(CT.expandedCooldowns) do
+        CreateRow(CT.mainFrame, cd)
+    end
+
+    CT:LayoutRows()
+end
+
+-- ---------------------------------------------------------------------------
 -- Public: CT:LayoutRows()
 -- Repositions all row frames based on CooldownTrackerDB.columns.
 -- Safe to call any time (e.g. from settings panel after columns change).
 -- ---------------------------------------------------------------------------
 function CT:LayoutRows()
-    local cols = math.max(1, math.min(#CT.COOLDOWNS, CooldownTrackerDB.columns or 1))
-    local n    = #CT.COOLDOWNS
+    local cols = math.max(1, math.min(#CT.expandedCooldowns, CooldownTrackerDB.columns or 1))
+    local n    = #CT.expandedCooldowns
     local f    = CT.mainFrame
 
     if cols == 1 then
@@ -285,7 +333,7 @@ function CT:LayoutRows()
                        + BOTTOM_PAD
         f:SetSize(WIDE_W, frameH)
 
-        for i, cd in ipairs(CT.COOLDOWNS) do
+        for i, cd in ipairs(CT.expandedCooldowns) do
             local row = CT.rows[cd.id]
             row:ClearAllPoints()
             row:SetPoint("TOPLEFT", f, "TOPLEFT",
@@ -302,7 +350,7 @@ function CT:LayoutRows()
                            + BOTTOM_PAD
         f:SetSize(frameW, frameH)
 
-        for i, cd in ipairs(CT.COOLDOWNS) do
+        for i, cd in ipairs(CT.expandedCooldowns) do
             local col = (i - 1) % cols
             local row = math.floor((i - 1) / cols)
             local r   = CT.rows[cd.id]
@@ -320,7 +368,7 @@ end
 -- ---------------------------------------------------------------------------
 function CT:UpdateAllRows()
     local now = GetTime()
-    for _, cd in ipairs(CT.COOLDOWNS) do
+    for _, cd in ipairs(CT.expandedCooldowns) do
         local row = CT.rows[cd.id]
         if row then UpdateRow(row, now) end
     end
@@ -394,7 +442,7 @@ function CT:BuildUI()
     divider:SetColorTexture(0.3, 0.3, 0.5, 0.6)
 
     -- Create all rows (layout applied below)
-    for _, cd in ipairs(CT.COOLDOWNS) do
+    for _, cd in ipairs(CT.expandedCooldowns) do
         CreateRow(f, cd)
     end
 

@@ -115,9 +115,98 @@ local function CreateSettingsPanel()
     layoutDivider:SetWidth(CONTENT_WIDTH)
     layoutDivider:SetColorTexture(0.3, 0.3, 0.4, 0.4)
 
+    -- ----- Class Roster section ---------------------------------------------
+    local rosterSection = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+    rosterSection:SetPoint("TOPLEFT", layoutDivider, "BOTTOMLEFT", 0, -10)
+    rosterSection:SetText("|cffaaddffClass Roster|r")
+
+    local rosterDesc = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    rosterDesc:SetPoint("TOPLEFT", rosterSection, "BOTTOMLEFT", 0, -4)
+    rosterDesc:SetText("How many of each class are in your raid. Abilities duplicate per player.")
+    rosterDesc:SetTextColor(0.6, 0.6, 0.6)
+    rosterDesc:SetWidth(CONTENT_WIDTH)
+    rosterDesc:SetJustifyH("LEFT")
+
+    -- Derive unique classes in encounter order (preserving CT.COOLDOWNS order)
+    local classCountBoxes = {}
+    local seenClasses = {}
+    local classList = {}
+    for _, cd in ipairs(CT.COOLDOWNS) do
+        if not seenClasses[cd.class] then
+            seenClasses[cd.class] = true
+            table.insert(classList, { class = cd.class, r = cd.r, g = cd.g, b = cd.b })
+        end
+    end
+
+    local rosterAnchor = rosterDesc
+    for _, cls in ipairs(classList) do
+        local clsName = cls.class
+
+        local clsLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+        clsLabel:SetPoint("TOPLEFT", rosterAnchor, "BOTTOMLEFT", 0, -8)
+        clsLabel:SetText(clsName)
+        clsLabel:SetTextColor(cls.r, cls.g, cls.b)
+        clsLabel:SetWidth(160)
+
+        local countBox = CreateFrame("EditBox", "CTSettingsCount_" .. clsName:gsub(" ", ""), panel, "BackdropTemplate")
+        countBox:SetSize(40, 22)
+        countBox:SetPoint("LEFT", clsLabel, "RIGHT", 8, 0)
+        countBox:SetAutoFocus(false)
+        countBox:SetFontObject("ChatFontNormal")
+        countBox:SetJustifyH("CENTER")
+        if countBox.SetBackdrop then
+            countBox:SetBackdrop({
+                bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+                edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+                tile = true, tileSize = 16, edgeSize = 12,
+                insets = { left = 3, right = 3, top = 3, bottom = 3 },
+            })
+            countBox:SetBackdropColor(0.1, 0.1, 0.1, 0.8)
+            countBox:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
+        end
+        countBox:SetTextInsets(4, 4, 2, 2)
+
+        local countHint = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+        countHint:SetPoint("LEFT", countBox, "RIGHT", 8, 0)
+        countHint:SetText("players (1-5)")
+        countHint:SetTextColor(0.5, 0.5, 0.5)
+
+        countBox:SetScript("OnTextChanged", function(self, userInput)
+            if not userInput then return end
+            local val = tonumber(self:GetText())
+            if val and val >= 1 and val <= 5 then
+                CooldownTrackerDB.classCounts = CooldownTrackerDB.classCounts or {}
+                CooldownTrackerDB.classCounts[clsName] = val
+                if CT.RebuildUI then CT:RebuildUI() end
+            end
+        end)
+        countBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+        countBox:SetScript("OnEscapePressed", function(self)
+            self:SetText(tostring((CooldownTrackerDB.classCounts or {})[clsName] or 1))
+            self:ClearFocus()
+        end)
+        countBox:SetScript("OnEnter", function()
+            GameTooltip:SetOwner(countBox, "ANCHOR_RIGHT")
+            GameTooltip:SetText(clsName .. " Count")
+            GameTooltip:AddLine("Number of " .. clsName .. "s in the raid.", 1, 1, 1)
+            GameTooltip:AddLine("Each ability for this class will appear N times.", 0.8, 0.8, 0.8)
+            GameTooltip:Show()
+        end)
+        countBox:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+        classCountBoxes[clsName] = countBox
+        rosterAnchor = clsLabel
+    end
+
+    local rosterDivider = panel:CreateTexture(nil, "ARTWORK")
+    rosterDivider:SetHeight(1)
+    rosterDivider:SetPoint("TOPLEFT", rosterAnchor, "BOTTOMLEFT", 0, -10)
+    rosterDivider:SetWidth(CONTENT_WIDTH)
+    rosterDivider:SetColorTexture(0.3, 0.3, 0.4, 0.4)
+
     -- ----- Cooldown duration headers ----------------------------------------
     local hdrAbility = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
-    hdrAbility:SetPoint("TOPLEFT", layoutDivider, "BOTTOMLEFT", ICON_SIZE + 12, -8)
+    hdrAbility:SetPoint("TOPLEFT", rosterDivider, "BOTTOMLEFT", ICON_SIZE + 12, -8)
     hdrAbility:SetText("Ability")
     hdrAbility:SetTextColor(0.7, 0.7, 0.7)
 
@@ -133,10 +222,18 @@ local function CreateSettingsPanel()
     divider:SetColorTexture(0.3, 0.3, 0.4, 0.6)
 
     -- refresh colBox on panel show
-    local origOnShow = panel:GetScript("OnShow")
+    -- local origOnShow = panel:GetScript("OnShow") -- This was removed as it's no longer needed.
     panel:SetScript("OnShow", function(self)
-        colBox:SetText(tostring(CooldownTrackerDB.columns or 1))
-        if origOnShow then origOnShow(self) end
+        -- Refresh all boxes on panel show (deferred one frame so Settings canvas doesn't wipe them)
+        C_Timer.After(0, function()
+            colBox:SetText(tostring(CooldownTrackerDB.columns or 1))
+            local counts = CooldownTrackerDB.classCounts or {}
+            for clsName, box in pairs(classCountBoxes) do
+                box:SetText(tostring(counts[clsName] or 1))
+            end
+            -- Call the original refresh for duration edit boxes
+            RefreshAllEditBoxes()
+        end)
     end)
 
     -- ----- Scroll frame -----------------------------------------------------
@@ -291,9 +388,6 @@ local function CreateSettingsPanel()
         print("|cffaaddff[CooldownTracker]|r All durations reset to defaults.")
     end)
 
-    -- When the Settings canvas shows our panel, wait one frame then fill boxes
-    panel:SetScript("OnShow", RefreshAllEditBoxes)
-
     return panel
 end
 
@@ -304,6 +398,7 @@ end
 function CT:InitSettings()
     CooldownTrackerDB.customDurations = CooldownTrackerDB.customDurations or {}
     CooldownTrackerDB.columns         = CooldownTrackerDB.columns or 1
+    CooldownTrackerDB.classCounts     = CooldownTrackerDB.classCounts or {}
     ApplyCustomDurations()
 
     local panel   = CreateSettingsPanel()
