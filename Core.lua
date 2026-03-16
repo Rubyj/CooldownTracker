@@ -25,13 +25,13 @@ eventFrame:SetScript("OnEvent", function(_, event, name)
         -- Initialise saved variables
         CooldownTrackerDB = CooldownTrackerDB or {}
         CooldownTrackerDB.classCounts = CooldownTrackerDB.classCounts or {}
-        -- Expand cooldowns before building UI
+        -- Register the settings panel (applies saved durations to COOLDOWNS)
+        CT:InitSettings()
+        -- Expand cooldowns before building UI (so copies inherit saved durations)
         CT:BuildExpandedCooldowns()
         -- Build the UI (defined in UI.lua) then restore the saved position
         CT:BuildUI()
         CT:RestorePosition()
-        -- Register the settings panel (defined in Settings.lua)
-        CT:InitSettings()
     end
 end)
 
