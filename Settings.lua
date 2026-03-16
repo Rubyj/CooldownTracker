@@ -402,12 +402,5 @@ function CT:InitSettings()
 end
 
 function CT:OpenSettings()
-    if CT.settingsCategory then
-        -- Deferred to next frame to escape the protected chat frame context;
-        -- calling Settings.OpenToCategory directly from a slash command
-        -- triggers a taint error because it invokes OpenSettingsPanel().
-        C_Timer.After(0, function()
-            Settings.OpenToCategory(CT.settingsCategory:GetID())
-        end)
-    end
+    print("|cffaaddff[CooldownTracker]|r Open settings via: |cffffffffEscape → Options → AddOns → Healer Cooldown Tracker|r")
 end
