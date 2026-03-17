@@ -53,7 +53,6 @@ end
 -- These functions reanchor all child widgets inside an existing row frame.
 -- ---------------------------------------------------------------------------
 local function ApplyWideLayout(row)
-    local cd = row.cd
     local rowW = WIDE_W - 16
 
     row:SetSize(rowW, WIDE_ROW_H)
