@@ -89,7 +89,7 @@ CT.COOLDOWNS = {
         name            = "Apotheosis",
         duration        = 120,
         defaultDuration = 120,
-        icon            = "Interface\\Icons\\ability_priest_apotheosis",
+        icon            = "Interface\\Icons\\ability_priest_ascension",
         r               = 1.0, g = 1.0, b = 1.0,
     },
     {
