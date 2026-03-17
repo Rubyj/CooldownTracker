@@ -415,8 +415,10 @@ function CT:BuildUI()
         if not CooldownTrackerDB.frameLocked then self:StartMoving() end
     end)
     f:SetScript("OnDragStop", function(self)
-        self:StopMovingOrSizing()
-        SavePosition(self)
+        if not CooldownTrackerDB.frameLocked then
+            self:StopMovingOrSizing()
+            SavePosition(self)
+        end
     end)
     f:SetFrameStrata("MEDIUM")
     f:SetClampedToScreen(true)
