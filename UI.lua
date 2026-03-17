@@ -454,7 +454,7 @@ function CT:BuildUI()
     -- Lock button
     local lockBtn = CreateFrame("Button", nil, f)
     lockBtn:SetSize(32, 32)
-    lockBtn:SetPoint("TOPRIGHT", closeBtn, "TOPLEFT", -2, 0)
+    lockBtn:SetPoint("RIGHT", closeBtn, "LEFT", -2, 0)
 
     local lockTex = lockBtn:CreateTexture(nil, "ARTWORK")
     lockTex:SetAllPoints(lockBtn)
