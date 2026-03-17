@@ -23,7 +23,7 @@ local WIDE_W       = 300
 local ICON_SIZE    = 28
 -- Card mode (columns ≥ 2)
 local CARD_W       = 72
-local CARD_H       = 58
+local CARD_H       = 68
 local CARD_PAD     = 4
 local CARD_ICON    = 48
 
@@ -108,11 +108,11 @@ local function ApplyCardLayout(row, cW, cH)
 
     row.iconTex:ClearAllPoints()
     row.iconTex:SetSize(CARD_ICON, CARD_ICON)
-    row.iconTex:SetPoint("CENTER", row, "CENTER", 0, 0)
+    row.iconTex:SetPoint("CENTER", row, "CENTER", 0, 8)
 
     row.timerLabel:ClearAllPoints()
-    row.timerLabel:SetFont("Fonts\\FRIZQT__.TTF", 14, "THICKOUTLINE")
-    row.timerLabel:SetPoint("CENTER", row, "CENTER", 0, 0)
+    row.timerLabel:SetFont("Fonts\\FRIZQT__.TTF", 12, "THICKOUTLINE")
+    row.timerLabel:SetPoint("BOTTOM", row, "BOTTOM", 0, 4)
 
     row.bar:Hide()
     row.barFill:Hide()
@@ -151,8 +151,7 @@ local function UpdateRow(row, now)
                 elseif frac < 0.5  then row.barFill:SetVertexColor(0.9, 0.7, 0.1)
                 else                    row.barFill:SetVertexColor(cd.r, cd.g, cd.b) end
             end
-            local color = row.isWide and "|cffff8040" or "|cffffffff"
-            row.timerLabel:SetText(color .. FormatTime(remaining) .. "|r")
+            row.timerLabel:SetText("|cffff8040" .. FormatTime(remaining) .. "|r")
         end
     else
         row.timerLabel:SetText("|cff00ff00Ready|r")
