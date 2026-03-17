@@ -111,7 +111,7 @@ local function ApplyCardLayout(row, cW, cH)
     row.iconTex:SetPoint("CENTER", row, "CENTER", 0, 0)
 
     row.timerLabel:ClearAllPoints()
-    row.timerLabel:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+    row.timerLabel:SetFont("Fonts\\FRIZQT__.TTF", 14, "THICKOUTLINE")
     row.timerLabel:SetPoint("CENTER", row, "CENTER", 0, 0)
 
     row.bar:Hide()
@@ -151,7 +151,8 @@ local function UpdateRow(row, now)
                 elseif frac < 0.5  then row.barFill:SetVertexColor(0.9, 0.7, 0.1)
                 else                    row.barFill:SetVertexColor(cd.r, cd.g, cd.b) end
             end
-            row.timerLabel:SetText("|cffff8040" .. FormatTime(remaining) .. "|r")
+            local color = row.isWide and "|cffff8040" or "|cffffffff"
+            row.timerLabel:SetText(color .. FormatTime(remaining) .. "|r")
         end
     else
         row.timerLabel:SetText("|cff00ff00Ready|r")
