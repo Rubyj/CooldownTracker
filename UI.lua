@@ -21,8 +21,6 @@ local ROW_PADDING  = 6
 local WIDE_ROW_H   = 36
 local WIDE_W       = 300
 local ICON_SIZE    = 28
-local BUTTON_W     = 52
-
 -- Card mode (columns ≥ 2)
 local CARD_W       = 100
 local CARD_H       = 72
