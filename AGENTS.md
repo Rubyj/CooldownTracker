@@ -12,6 +12,33 @@ The addon is split into modular components, sharing a single private namespace (
 - `UI.lua`: Handles rendering the main tracker window, row layouts (grid vs vertical), and the per-frame `OnUpdate` timer loop.
 - `Settings.lua`: Implements the in-game options panel (Escape -> Options -> AddOns) using the modern `Settings` API. Handles SavedVariables overrides.
 - `Core.lua`: The bootstrap file. Handles `ADDON_LOADED`, slash commands (`/cdt`), and initializes the UI and Settings.
+- `.github/workflows/release.yml`: GitHub Actions CI/CD workflow (see CI/CD section below).
+- `.luacheckrc`: Luacheck static analysis configuration.
+- `.pkgmeta`: BigWigs packager metadata for release packaging.
+
+## 🔁 CI/CD
+The project uses GitHub Actions for linting and release packaging.
+
+### Workflow (`.github/workflows/release.yml`)
+- **Push to `main`:** Runs `luacheck` on all Lua files via `nebularg/actions-luacheck@v1`.
+- **Push a `v*` tag:** Runs luacheck, then runs `BigWigsMods/packager@v2` which creates a GitHub Release with the addon zip attached. Uses the built-in `GITHUB_TOKEN` — no additional secrets required.
+
+### Luacheck (`.luacheckrc`)
+- `std = "lua51"` covers standard Lua globals.
+- WoW API globals (`CreateFrame`, `GetTime`, `C_Timer`, `Settings`, etc.) are declared in `read_globals`.
+- Addon-owned globals (`CooldownTrackerDB`, slash command vars) are declared in `globals`.
+- **When adding new WoW API calls:** if luacheck starts reporting an undefined global, add it to `read_globals` in `.luacheckrc`.
+
+### Packager (`.pkgmeta`)
+- Dev-only files (`AGENTS.md`, `.github/`, `.luacheckrc`, `.gitignore`) are listed under `ignore` so they are excluded from the release zip.
+- **When adding new dev-only files** (e.g. test scripts, editor config), add them to the `ignore` list in `.pkgmeta`.
+
+### Releasing
+```bash
+git tag -a v1.2.0 -m "Version 1.2.0"
+git push origin v1.2.0
+```
+Also update `## Version:` in `CooldownTracker.toc` to match the tag before tagging.
 
 ## 📜 Coding Standards & Conventions
 1. **Private Namespace:** Always use the addon's private namespace passed by the WoW client on load. Do not pollute the global environment.

@@ -18,11 +18,18 @@ Because Midnight restricts addons from reading real-time combat data, this addon
 
 ## Installation
 
-1. Copy the `CooldownTracker` folder into:
+### Download a release
+
+1. Go to the [Releases](../../releases) page and download the latest `CooldownTracker-*.zip`.
+2. Unzip and copy the `CooldownTracker` folder into:
    ```
    World of Warcraft\_retail_\Interface\AddOns\CooldownTracker\
    ```
-2. Launch WoW and enable **Healer Cooldown Tracker** in the AddOns list.
+3. Launch WoW and enable **Healer Cooldown Tracker** in the AddOns list.
+
+### From source
+
+Clone the repo and symlink (or copy) the folder directly into your AddOns directory.
 
 ## Usage
 
@@ -70,14 +77,33 @@ No other file needs to change.
 
 ```
 CooldownTracker/
-├── CooldownTracker.toc   — Addon manifest & metadata
-├── Data.lua              — Cooldown definitions (edit this to add abilities)
-├── UI.lua                — Frame, row widgets, timer rendering
-├── Settings.lua          — In-game options panel
-├── Core.lua              — Init, events, slash commands
-├── AGENTS.md             — AI agent coding guidelines
-└── README.md             — This file
+├── CooldownTracker.toc             — Addon manifest & metadata
+├── Data.lua                        — Cooldown definitions (edit this to add abilities)
+├── UI.lua                          — Frame, row widgets, timer rendering
+├── Settings.lua                    — In-game options panel
+├── Core.lua                        — Init, events, slash commands
+├── .github/workflows/release.yml   — CI: luacheck on push, package+release on tag
+├── .luacheckrc                     — Luacheck config (WoW globals whitelist)
+├── .pkgmeta                        — BigWigs packager metadata
+├── AGENTS.md                       — AI agent coding guidelines
+└── README.md                       — This file
 ```
+
+## Releases & CI
+
+Releases are built automatically by GitHub Actions using the [BigWigs packager](https://github.com/BigWigsMods/packager).
+
+- **Push to `main`** — runs [luacheck](https://github.com/mpeterv/luacheck) static analysis on all Lua files.
+- **Push a version tag** — runs luacheck, packages the addon, and publishes a GitHub Release with a downloadable zip.
+
+To ship a release:
+
+```bash
+git tag -a v1.2.0 -m "Version 1.2.0"
+git push origin v1.2.0
+```
+
+The zip will appear on the [Releases](../../releases) page within a minute or two.
 
 ## Compatibility
 
