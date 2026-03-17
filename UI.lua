@@ -22,9 +22,9 @@ local WIDE_ROW_H   = 36
 local WIDE_W       = 300
 local ICON_SIZE    = 28
 -- Card mode (columns ≥ 2)
-local CARD_W       = 52
-local CARD_H       = 52
-local CARD_PAD     = 2
+local CARD_W       = 72
+local CARD_H       = 58
+local CARD_PAD     = 4
 local CARD_ICON    = 48
 
 -- ---------------------------------------------------------------------------
