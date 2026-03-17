@@ -101,6 +101,15 @@ CT.COOLDOWNS = {
         icon            = "Interface\\Icons\\spell_holy_divinehymn",
         r               = 1.0, g = 1.0, b = 1.0,
     },
+    {
+        id              = "priest_halo",
+        class           = "Priest",
+        name            = "Halo",
+        duration        = 40,
+        defaultDuration = 40,
+        icon            = "Interface\\Icons\\ability_priest_halo",
+        r               = 1.0, g = 1.0, b = 1.0,
+    },
 
     -- -------------------------------------------------------------------------
     -- Warrior (class colour: tan/gold)
