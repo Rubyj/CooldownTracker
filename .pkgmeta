@@ -1,0 +1,8 @@
+package-as: CooldownTracker
+
+ignore:
+  - .github
+  - .gitignore
+  - .luacheckrc
+  - .pkgmeta
+  - AGENTS.md
