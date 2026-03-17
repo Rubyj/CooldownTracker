@@ -27,7 +27,7 @@ local BUTTON_W     = 52
 local CARD_W       = 100
 local CARD_H       = 72
 local CARD_PAD     = 6
-local CARD_ICON    = 26
+local CARD_ICON    = 44
 
 -- ---------------------------------------------------------------------------
 -- Local helpers
@@ -40,10 +40,6 @@ local function FormatTime(seconds)
     else           return string.format("0:%02d", s) end
 end
 
-local function SetBtnColor(btn, r, g, b)
-    local tex = btn:GetNormalTexture()
-    if tex then tex:SetVertexColor(r, g, b) end
-end
 
 local function SavePosition(frame)
     CooldownTrackerDB = CooldownTrackerDB or {}
@@ -84,11 +80,11 @@ local function ApplyWideLayout(row)
 
     row.timerLabel:ClearAllPoints()
     row.timerLabel:SetFont("Fonts\\FRIZQT__.TTF", 13, "OUTLINE")
-    row.timerLabel:SetPoint("RIGHT", row, "RIGHT", -(BUTTON_W + 8), 0)
+    row.timerLabel:SetPoint("RIGHT", row, "RIGHT", -6, 0)
 
     row.bar:Show()
     row.bar:ClearAllPoints()
-    row.bar:SetSize(math.max(4, rowW - ICON_SIZE - BUTTON_W - 30), 3)
+    row.bar:SetSize(math.max(4, rowW - ICON_SIZE - 60), 3)
     row.bar:SetPoint("BOTTOMLEFT", row.iconTex, "BOTTOMRIGHT", 6, 2)
 
     row.barFill:Show()
@@ -96,9 +92,7 @@ local function ApplyWideLayout(row)
     row.barFill:SetSize(row.bar:GetWidth(), 3)
     row.barFill:SetPoint("LEFT", row.bar, "LEFT", 0, 0)
 
-    row.button:ClearAllPoints()
-    row.button:SetSize(BUTTON_W, 22)
-    row.button:SetPoint("RIGHT", row, "RIGHT", -2, 0)
+    row.button:Hide()
 
     row.isWide = true
 end
@@ -112,25 +106,21 @@ local function ApplyCardLayout(row, cW, cH)
     row.strip:SetSize(cW, 3)
     row.strip:SetPoint("TOP", row, "TOP", 0, 0)
 
-    local cd = row.cd
+    row.nameLabel:Hide()
+    row.classLabel:Hide()
+
     row.iconTex:ClearAllPoints()
     row.iconTex:SetSize(CARD_ICON, CARD_ICON)
-    row.iconTex:SetPoint("TOP", row, "TOP", 0, -6)
-
-    row.nameLabel:Hide()   -- not enough room
-    row.classLabel:Hide()
+    row.iconTex:SetPoint("CENTER", row, "CENTER", 0, 6)
 
     row.timerLabel:ClearAllPoints()
     row.timerLabel:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-    row.timerLabel:SetPoint("CENTER", row, "CENTER", 0, 4)
+    row.timerLabel:SetPoint("BOTTOM", row, "BOTTOM", 0, 6)
 
     row.bar:Hide()
     row.barFill:Hide()
 
-    local btnW = math.max(40, cW - 12)
-    row.button:ClearAllPoints()
-    row.button:SetSize(btnW, 20)
-    row.button:SetPoint("BOTTOM", row, "BOTTOM", 0, 4)
+    row.button:Hide()
 
     row.isWide = false
 end
@@ -151,10 +141,10 @@ local function UpdateRow(row, now)
                 row.barFill:SetWidth(row.bar:GetWidth())
                 row.barFill:SetVertexColor(0.2, 0.9, 0.2)
             end
-            row.button:SetText("Used")
-            SetBtnColor(row.button, 0.3, 0.85, 0.3)
             row.iconTex:SetAlpha(1)
-            PlaySound(SOUNDKIT.ALARM_CLOCK_WARNING_3)
+            if CooldownTrackerDB.playSoundOnReady ~= false then
+                PlaySound(SOUNDKIT.ALARM_CLOCK_WARNING_3)
+            end
         else
             local frac = remaining / cd.duration
             if row.isWide then
@@ -165,8 +155,6 @@ local function UpdateRow(row, now)
                 else                    row.barFill:SetVertexColor(cd.r, cd.g, cd.b) end
             end
             row.timerLabel:SetText("|cffff8040" .. FormatTime(remaining) .. "|r")
-            row.button:SetText("Reset")
-            SetBtnColor(row.button, 0.8, 0.3, 0.3)
         end
     else
         row.timerLabel:SetText("|cff00ff00Ready|r")
@@ -174,8 +162,6 @@ local function UpdateRow(row, now)
             row.barFill:SetWidth(row.bar:GetWidth())
             row.barFill:SetVertexColor(0.2, 0.9, 0.2)
         end
-        row.button:SetText("Used")
-        SetBtnColor(row.button, 0.3, 0.85, 0.3)
     end
 end
 
@@ -183,8 +169,9 @@ end
 -- Row construction (creates all child frames; layout applied separately)
 -- ---------------------------------------------------------------------------
 local function CreateRow(parent, cd)
-    local row = CreateFrame("Frame", nil, parent)
+    local row = CreateFrame("Button", nil, parent)
     row.cd = cd
+    row:RegisterForClicks("LeftButtonUp")
 
     local bg = row:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(row)
@@ -224,10 +211,12 @@ local function CreateRow(parent, cd)
     fill:SetColorTexture(cd.r, cd.g, cd.b)
     row.barFill = fill
 
-    local btn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
-    btn:SetText("Used")
-    SetBtnColor(btn, 0.3, 0.85, 0.3)
-    btn:SetScript("OnClick", function()
+    -- Invisible placeholder kept so RebuildUI doesn't need changes (button ref still safe to hide)
+    local btn = CreateFrame("Frame", nil, row)
+    btn:Hide()
+    row.button = btn
+
+    row:SetScript("OnClick", function()
         local mycd = row.cd
         if CT.activeTimers[mycd.id] then
             CT.activeTimers[mycd.id] = nil
@@ -236,7 +225,6 @@ local function CreateRow(parent, cd)
         end
         UpdateRow(row, GetTime())
     end)
-    row.button = btn
 
     row:SetScript("OnEnter", function()
         local mycd = row.cd
@@ -277,19 +265,22 @@ end
 --   count>1: N copies with unique IDs and "#N" appended to name
 -- ---------------------------------------------------------------------------
 function CT:BuildExpandedCooldowns()
-    local counts = CooldownTrackerDB.classCounts or {}
+    local counts   = CooldownTrackerDB.classCounts or {}
+    local disabled = CooldownTrackerDB.disabledSpells or {}
     CT.expandedCooldowns = {}
     for _, cd in ipairs(CT.COOLDOWNS) do
-        local count = math.max(1, math.min(5, counts[cd.class] or 1))
-        if count == 1 then
-            table.insert(CT.expandedCooldowns, cd)
-        else
-            for n = 1, count do
-                local copy = {}
-                for k, v in pairs(cd) do copy[k] = v end
-                copy.id   = cd.id .. "_" .. n
-                copy.name = cd.name .. " #" .. n
-                table.insert(CT.expandedCooldowns, copy)
+        if not disabled[cd.id] then
+            local count = math.max(1, math.min(5, counts[cd.class] or 1))
+            if count == 1 then
+                table.insert(CT.expandedCooldowns, cd)
+            else
+                for n = 1, count do
+                    local copy = {}
+                    for k, v in pairs(cd) do copy[k] = v end
+                    copy.id   = cd.id .. "_" .. n
+                    copy.name = cd.name .. " #" .. n
+                    table.insert(CT.expandedCooldowns, copy)
+                end
             end
         end
     end
@@ -325,8 +316,6 @@ function CT:RebuildUI()
         row.classLabel:SetTextColor(cd.r, cd.g, cd.b)
         row.timerLabel:SetText("|cff00ff00Ready|r")
         row.barFill:SetVertexColor(cd.r, cd.g, cd.b)
-        row.button:SetText("Used")
-        SetBtnColor(row.button, 0.3, 0.85, 0.3)
     end
 
     -- Hide unused pool frames
@@ -439,7 +428,7 @@ function CT:BuildUI()
             tile     = true, tileSize = 16, edgeSize = 16,
             insets   = { left = 4, right = 4, top = 4, bottom = 4 },
         })
-        f:SetBackdropColor(0.05, 0.05, 0.08, 0.92)
+        f:SetBackdropColor(0.05, 0.05, 0.08, 0.55)
         f:SetBackdropBorderColor(0.3, 0.3, 0.4, 0.8)
     end
 
@@ -448,7 +437,7 @@ function CT:BuildUI()
     titleBg:SetHeight(TITLE_HEIGHT)
     titleBg:SetPoint("TOPLEFT",  f, "TOPLEFT",  0, 0)
     titleBg:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, 0)
-    titleBg:SetColorTexture(0.08, 0.08, 0.15, 0.95)
+    titleBg:SetColorTexture(0.08, 0.08, 0.15, 0.65)
 
     -- Title text
     local titleText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
