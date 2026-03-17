@@ -24,11 +24,14 @@ eventFrame:SetScript("OnEvent", function(_, event, name)
     if event == "ADDON_LOADED" and name == AddonName then
         -- Initialise saved variables
         CooldownTrackerDB = CooldownTrackerDB or {}
+        CooldownTrackerDB.classCounts = CooldownTrackerDB.classCounts or {}
+        -- Register the settings panel (applies saved durations to COOLDOWNS)
+        CT:InitSettings()
+        -- Expand cooldowns before building UI (so copies inherit saved durations)
+        CT:BuildExpandedCooldowns()
         -- Build the UI (defined in UI.lua) then restore the saved position
         CT:BuildUI()
         CT:RestorePosition()
-        -- Register the settings panel (defined in Settings.lua)
-        CT:InitSettings()
     end
 end)
 
@@ -40,7 +43,7 @@ SLASH_COOLDOWNTRACKER2 = "/cooldowntracker"
 SlashCmdList["COOLDOWNTRACKER"] = function(msg)
     local cmd = msg and msg:lower():match("^%s*(.-)%s*$") or ""
     if cmd == "reset" then
-        for _, cd in ipairs(CT.COOLDOWNS) do
+        for _, cd in ipairs(CT.expandedCooldowns) do
             CT.activeTimers[cd.id] = nil
         end
         print("|cffaaddff[CooldownTracker]|r All timers reset.")

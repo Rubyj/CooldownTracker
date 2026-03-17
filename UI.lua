@@ -228,22 +228,24 @@ local function CreateRow(parent, cd)
     btn:SetText("Used")
     SetBtnColor(btn, 0.3, 0.85, 0.3)
     btn:SetScript("OnClick", function()
-        if CT.activeTimers[cd.id] then
-            CT.activeTimers[cd.id] = nil
+        local mycd = row.cd
+        if CT.activeTimers[mycd.id] then
+            CT.activeTimers[mycd.id] = nil
         else
-            CT.activeTimers[cd.id] = GetTime() + cd.duration
+            CT.activeTimers[mycd.id] = GetTime() + mycd.duration
         end
         UpdateRow(row, GetTime())
     end)
     row.button = btn
 
     row:SetScript("OnEnter", function()
-        bg:SetColorTexture(cd.r * 0.15, cd.g * 0.15, cd.b * 0.15, 0.5)
+        local mycd = row.cd
+        bg:SetColorTexture(mycd.r * 0.15, mycd.g * 0.15, mycd.b * 0.15, 0.5)
         GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
-        GameTooltip:SetText(cd.name)
-        GameTooltip:AddLine("Class: " .. cd.class, 1, 1, 1)
-        local m = math.floor(cd.duration / 60)
-        local s = cd.duration % 60
+        GameTooltip:SetText(mycd.name)
+        GameTooltip:AddLine("Class: " .. mycd.class, 1, 1, 1)
+        local m = math.floor(mycd.duration / 60)
+        local s = mycd.duration % 60
         if m > 0 and s > 0 then
             GameTooltip:AddLine(string.format("Cooldown: %dm %ds", m, s), 0.8, 0.8, 0.8)
         elseif m > 0 then
@@ -252,7 +254,7 @@ local function CreateRow(parent, cd)
             GameTooltip:AddLine(string.format("Cooldown: %ds", s), 0.8, 0.8, 0.8)
         end
         GameTooltip:AddLine(" ")
-        if CT.activeTimers[cd.id] then
+        if CT.activeTimers[mycd.id] then
             GameTooltip:AddLine("Click to |cffff4040reset|r the timer.", 1, 0.8, 0)
         else
             GameTooltip:AddLine("Click to start the cooldown timer.", 1, 0.8, 0)
@@ -269,13 +271,87 @@ local function CreateRow(parent, cd)
 end
 
 -- ---------------------------------------------------------------------------
+-- Public: CT:BuildExpandedCooldowns()
+-- Populates CT.expandedCooldowns from CT.COOLDOWNS + class counts.
+--   count=1: original entry unchanged (no "#N" suffix)
+--   count>1: N copies with unique IDs and "#N" appended to name
+-- ---------------------------------------------------------------------------
+function CT:BuildExpandedCooldowns()
+    local counts = CooldownTrackerDB.classCounts or {}
+    CT.expandedCooldowns = {}
+    for _, cd in ipairs(CT.COOLDOWNS) do
+        local count = math.max(1, math.min(5, counts[cd.class] or 1))
+        if count == 1 then
+            table.insert(CT.expandedCooldowns, cd)
+        else
+            for n = 1, count do
+                local copy = {}
+                for k, v in pairs(cd) do copy[k] = v end
+                copy.id   = cd.id .. "_" .. n
+                copy.name = cd.name .. " #" .. n
+                table.insert(CT.expandedCooldowns, copy)
+            end
+        end
+    end
+end
+
+-- ---------------------------------------------------------------------------
+-- Public: CT:RebuildUI()
+-- Safe to call at any time (including from OnTextChanged).
+-- Reconfigures the existing pre-allocated frame pool — no SetParent or
+-- CreateFrame calls at runtime, which avoids WoW taint errors.
+-- ---------------------------------------------------------------------------
+function CT:RebuildUI()
+    CT.activeTimers = {}
+    CT:BuildExpandedCooldowns()
+
+    -- Grow the pool if needed (only at first expansion — safe during ADDON_LOADED-like context)
+    while #CT.pool < #CT.expandedCooldowns do
+        local row = CreateRow(CT.mainFrame, CT.expandedCooldowns[#CT.pool + 1])
+        row:Hide()
+        CT.pool[#CT.pool + 1] = row
+    end
+
+    -- Reconfigure pool frames: update cd data and visuals (no SetScript!)
+    for i, cd in ipairs(CT.expandedCooldowns) do
+        local row = CT.pool[i]
+        row:Show()
+        row.cd = cd
+        row.strip:SetColorTexture(cd.r, cd.g, cd.b, 0.9)
+        row.iconTex:SetTexture(cd.icon)
+        row.nameLabel:SetText(cd.name)
+        row.nameLabel:SetTextColor(1, 1, 1)
+        row.classLabel:SetText(cd.class)
+        row.classLabel:SetTextColor(cd.r, cd.g, cd.b)
+        row.timerLabel:SetText("|cff00ff00Ready|r")
+        row.barFill:SetVertexColor(cd.r, cd.g, cd.b)
+        row.button:SetText("Used")
+        SetBtnColor(row.button, 0.3, 0.85, 0.3)
+    end
+
+    -- Hide unused pool frames
+    for i = #CT.expandedCooldowns + 1, #CT.pool do
+        CT.pool[i]:Hide()
+    end
+
+    -- Rebuild rows lookup
+    CT.rows = {}
+    for i, cd in ipairs(CT.expandedCooldowns) do
+        CT.rows[cd.id] = CT.pool[i]
+    end
+
+    CT:LayoutRows()
+end
+
+
+-- ---------------------------------------------------------------------------
 -- Public: CT:LayoutRows()
 -- Repositions all row frames based on CooldownTrackerDB.columns.
 -- Safe to call any time (e.g. from settings panel after columns change).
 -- ---------------------------------------------------------------------------
 function CT:LayoutRows()
-    local cols = math.max(1, math.min(#CT.COOLDOWNS, CooldownTrackerDB.columns or 1))
-    local n    = #CT.COOLDOWNS
+    local cols = math.max(1, math.min(#CT.expandedCooldowns, CooldownTrackerDB.columns or 1))
+    local n    = #CT.expandedCooldowns
     local f    = CT.mainFrame
 
     if cols == 1 then
@@ -285,7 +361,7 @@ function CT:LayoutRows()
                        + BOTTOM_PAD
         f:SetSize(WIDE_W, frameH)
 
-        for i, cd in ipairs(CT.COOLDOWNS) do
+        for i, cd in ipairs(CT.expandedCooldowns) do
             local row = CT.rows[cd.id]
             row:ClearAllPoints()
             row:SetPoint("TOPLEFT", f, "TOPLEFT",
@@ -302,7 +378,7 @@ function CT:LayoutRows()
                            + BOTTOM_PAD
         f:SetSize(frameW, frameH)
 
-        for i, cd in ipairs(CT.COOLDOWNS) do
+        for i, cd in ipairs(CT.expandedCooldowns) do
             local col = (i - 1) % cols
             local row = math.floor((i - 1) / cols)
             local r   = CT.rows[cd.id]
@@ -320,7 +396,7 @@ end
 -- ---------------------------------------------------------------------------
 function CT:UpdateAllRows()
     local now = GetTime()
-    for _, cd in ipairs(CT.COOLDOWNS) do
+    for _, cd in ipairs(CT.expandedCooldowns) do
         local row = CT.rows[cd.id]
         if row then UpdateRow(row, now) end
     end
@@ -393,9 +469,17 @@ function CT:BuildUI()
     divider:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, -TITLE_HEIGHT)
     divider:SetColorTexture(0.3, 0.3, 0.5, 0.6)
 
-    -- Create all rows (layout applied below)
-    for _, cd in ipairs(CT.COOLDOWNS) do
-        CreateRow(f, cd)
+    -- Create initial rows and pool
+    CT.pool = {}
+    for i, cd in ipairs(CT.expandedCooldowns) do
+        local row = CreateRow(f, cd)
+        CT.pool[i] = row
+    end
+
+    -- Build CT.rows from the initial expanded list
+    CT.rows = {}
+    for i, cd in ipairs(CT.expandedCooldowns) do
+        CT.rows[cd.id] = CT.pool[i]
     end
 
     f:SetScript("OnUpdate", function() CT:UpdateAllRows() end)
@@ -405,3 +489,4 @@ function CT:BuildUI()
     -- Apply layout (reads CooldownTrackerDB.columns, defaults to 1)
     CT:LayoutRows()
 end
+
