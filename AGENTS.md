@@ -12,16 +12,24 @@ The addon is split into modular components, sharing a single private namespace (
 - `UI.lua`: Handles rendering the main tracker window, row layouts (grid vs vertical), and the per-frame `OnUpdate` timer loop.
 - `Settings.lua`: Implements the in-game options panel (Escape -> Options -> AddOns) using the modern `Settings` API. Handles SavedVariables overrides.
 - `Core.lua`: The bootstrap file. Handles `ADDON_LOADED`, slash commands (`/cdt`), and initializes the UI and Settings.
-- `.github/workflows/release.yml`: GitHub Actions CI/CD workflow (see CI/CD section below).
+- `.github/workflows/ci.yml`: Luacheck lint workflow — runs on push to `main` and all PRs.
+- `.github/workflows/release.yml`: Packaging and GitHub Release workflow — runs on `v*` tag push.
+- `.github/pull_request_template.md`: PR template with WoW-specific checklist.
 - `.luacheckrc`: Luacheck static analysis configuration.
 - `.pkgmeta`: BigWigs packager metadata for release packaging.
 
 ## 🔁 CI/CD
 The project uses GitHub Actions for linting and release packaging.
 
-### Workflow (`.github/workflows/release.yml`)
-- **Push to `main`:** Runs `luacheck` on all Lua files via `nebularg/actions-luacheck@v1`.
-- **Push a `v*` tag:** Runs luacheck, then runs `BigWigsMods/packager@v2` which creates a GitHub Release with the addon zip attached. Uses the built-in `GITHUB_TOKEN` — no additional secrets required.
+### Workflows
+Two separate workflow files handle CI and releases:
+
+**`.github/workflows/ci.yml`** — triggers on push to `main` and on all pull requests:
+- Runs `luacheck` on all Lua files via `nebularg/actions-luacheck@v1`.
+
+**`.github/workflows/release.yml`** — triggers on `v*` tag push only:
+- Runs luacheck as a gate, then runs `BigWigsMods/packager@v2` to package the addon and create a GitHub Release with the zip attached.
+- Uses `permissions: contents: write` so the built-in `GITHUB_TOKEN` can publish releases — no additional secrets required.
 
 ### Luacheck (`.luacheckrc`)
 - `std = "lua51"` covers standard Lua globals.

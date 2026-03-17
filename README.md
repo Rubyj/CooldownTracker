@@ -82,7 +82,9 @@ CooldownTracker/
 ├── UI.lua                          — Frame, row widgets, timer rendering
 ├── Settings.lua                    — In-game options panel
 ├── Core.lua                        — Init, events, slash commands
-├── .github/workflows/release.yml   — CI: luacheck on push, package+release on tag
+├── .github/workflows/ci.yml        — Luacheck on push to main and all PRs
+├── .github/workflows/release.yml   — Package and publish release on version tag
+├── .github/pull_request_template.md — PR checklist template
 ├── .luacheckrc                     — Luacheck config (WoW globals whitelist)
 ├── .pkgmeta                        — BigWigs packager metadata
 ├── AGENTS.md                       — AI agent coding guidelines
@@ -93,7 +95,7 @@ CooldownTracker/
 
 Releases are built automatically by GitHub Actions using the [BigWigs packager](https://github.com/BigWigsMods/packager).
 
-- **Push to `main`** — runs [luacheck](https://github.com/mpeterv/luacheck) static analysis on all Lua files.
+- **Pull request or push to `main`** — runs [luacheck](https://github.com/mpeterv/luacheck) static analysis on all Lua files.
 - **Push a version tag** — runs luacheck, packages the addon, and publishes a GitHub Release with a downloadable zip.
 
 To ship a release:
