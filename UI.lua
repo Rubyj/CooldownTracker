@@ -411,7 +411,9 @@ function CT:BuildUI()
     f:SetMovable(true)
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
-    f:SetScript("OnDragStart", f.StartMoving)
+    f:SetScript("OnDragStart", function(self)
+        if not CooldownTrackerDB.frameLocked then self:StartMoving() end
+    end)
     f:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
         SavePosition(self)
@@ -451,7 +453,7 @@ function CT:BuildUI()
 
     -- Lock button
     local lockBtn = CreateFrame("Button", nil, f)
-    lockBtn:SetSize(14, 14)
+    lockBtn:SetSize(18, 18)
     lockBtn:SetPoint("TOPRIGHT", closeBtn, "TOPLEFT", -2, 0)
 
     local lockTex = lockBtn:CreateTexture(nil, "ARTWORK")
