@@ -22,10 +22,10 @@ local WIDE_ROW_H   = 36
 local WIDE_W       = 300
 local ICON_SIZE    = 28
 -- Card mode (columns ≥ 2)
-local CARD_W       = 100
-local CARD_H       = 72
-local CARD_PAD     = 6
-local CARD_ICON    = 44
+local CARD_W       = 72
+local CARD_H       = 68
+local CARD_PAD     = 4
+local CARD_ICON    = 48
 
 -- ---------------------------------------------------------------------------
 -- Local helpers
@@ -100,7 +100,7 @@ local function ApplyCardLayout(row, cW, cH)
     -- Colour accent becomes a top strip
     row.strip:Show()
     row.strip:ClearAllPoints()
-    row.strip:SetSize(cW, 3)
+    row.strip:SetSize(cW, 2)
     row.strip:SetPoint("TOP", row, "TOP", 0, 0)
 
     row.nameLabel:Hide()
@@ -108,11 +108,11 @@ local function ApplyCardLayout(row, cW, cH)
 
     row.iconTex:ClearAllPoints()
     row.iconTex:SetSize(CARD_ICON, CARD_ICON)
-    row.iconTex:SetPoint("CENTER", row, "CENTER", 0, 6)
+    row.iconTex:SetPoint("CENTER", row, "CENTER", 0, 8)
 
     row.timerLabel:ClearAllPoints()
-    row.timerLabel:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-    row.timerLabel:SetPoint("BOTTOM", row, "BOTTOM", 0, 6)
+    row.timerLabel:SetFont("Fonts\\FRIZQT__.TTF", 12, "THICKOUTLINE")
+    row.timerLabel:SetPoint("BOTTOM", row, "BOTTOM", 0, 4)
 
     row.bar:Hide()
     row.barFill:Hide()
@@ -172,7 +172,7 @@ local function CreateRow(parent, cd)
 
     local bg = row:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(row)
-    bg:SetColorTexture(0, 0, 0, 0.35)
+    bg:SetColorTexture(0, 0, 0, 0.20)
     row.bg = bg
 
     local strip = row:CreateTexture(nil, "BACKGROUND")
@@ -247,7 +247,7 @@ local function CreateRow(parent, cd)
         GameTooltip:Show()
     end)
     row:SetScript("OnLeave", function()
-        bg:SetColorTexture(0, 0, 0, 0.35)
+        bg:SetColorTexture(0, 0, 0, 0.20)
         GameTooltip:Hide()
     end)
 
@@ -429,7 +429,7 @@ function CT:BuildUI()
             tile     = true, tileSize = 16, edgeSize = 16,
             insets   = { left = 4, right = 4, top = 4, bottom = 4 },
         })
-        f:SetBackdropColor(0.05, 0.05, 0.08, 0.55)
+        f:SetBackdropColor(0.05, 0.05, 0.08, 0.35)
         f:SetBackdropBorderColor(0.3, 0.3, 0.4, 0.8)
     end
 
@@ -438,7 +438,7 @@ function CT:BuildUI()
     titleBg:SetHeight(TITLE_HEIGHT)
     titleBg:SetPoint("TOPLEFT",  f, "TOPLEFT",  0, 0)
     titleBg:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, 0)
-    titleBg:SetColorTexture(0.08, 0.08, 0.15, 0.65)
+    titleBg:SetColorTexture(0.08, 0.08, 0.15, 0.45)
 
     -- Title text
     local titleText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
