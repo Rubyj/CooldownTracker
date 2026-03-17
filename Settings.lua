@@ -369,6 +369,14 @@ local function CreateSettingsPanel()
                 CooldownTrackerDB.customDurations = CooldownTrackerDB.customDurations or {}
                 CooldownTrackerDB.customDurations[cd.id] = (val ~= cd.defaultDuration) and val or nil
                 cd.duration = val
+                if CT.expandedCooldowns then
+                    local prefix = cd.id .. "_"
+                    for _, ecd in ipairs(CT.expandedCooldowns) do
+                        if ecd.id == cd.id or ecd.id:sub(1, #prefix) == prefix then
+                            ecd.duration = val
+                        end
+                    end
+                end
             end
         end
         editBox:SetScript("OnTextChanged", function(self, userInput)
