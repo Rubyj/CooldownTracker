@@ -100,13 +100,11 @@ local function ApplyCardLayout(row, cW, cH)
     -- Colour accent becomes a top strip
     row.strip:Show()
     row.strip:ClearAllPoints()
-    row.strip:SetSize(cW, 3)
+    row.strip:SetSize(cW, 2)
     row.strip:SetPoint("TOP", row, "TOP", 0, 0)
 
     row.nameLabel:Hide()
     row.classLabel:Hide()
-
-    row.strip:SetSize(cW, 2)
 
     row.iconTex:ClearAllPoints()
     row.iconTex:SetSize(CARD_ICON, CARD_ICON)
