@@ -109,9 +109,22 @@ local function CreateSettingsPanel()
     end)
     colBox:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
+    -- ----- Sound toggle -----------------------------------------------------
+    local soundCheck = CreateFrame("CheckButton", "CTSettingsSoundCheck", panel, "UICheckButtonTemplate")
+    soundCheck:SetSize(24, 24)
+    soundCheck:SetPoint("TOPLEFT", colLabel, "BOTTOMLEFT", 0, -14)
+    soundCheck:SetChecked(CooldownTrackerDB.playSoundOnReady ~= false)
+    soundCheck:SetScript("OnClick", function(self)
+        CooldownTrackerDB.playSoundOnReady = self:GetChecked()
+    end)
+
+    local soundLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    soundLabel:SetPoint("LEFT", soundCheck, "RIGHT", 4, 0)
+    soundLabel:SetText("Play sound when cooldown is ready")
+
     local layoutDivider = panel:CreateTexture(nil, "ARTWORK")
     layoutDivider:SetHeight(1)
-    layoutDivider:SetPoint("TOPLEFT", colLabel, "BOTTOMLEFT", 0, -10)
+    layoutDivider:SetPoint("TOPLEFT", soundCheck, "BOTTOMLEFT", 0, -10)
     layoutDivider:SetWidth(CONTENT_WIDTH)
     layoutDivider:SetColorTexture(0.3, 0.3, 0.4, 0.4)
 
@@ -206,12 +219,17 @@ local function CreateSettingsPanel()
 
     -- ----- Cooldown duration headers ----------------------------------------
     local hdrAbility = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
-    hdrAbility:SetPoint("TOPLEFT", rosterDivider, "BOTTOMLEFT", ICON_SIZE + 12, -8)
+    hdrAbility:SetPoint("TOPLEFT", rosterDivider, "BOTTOMLEFT", 28 + ICON_SIZE + 12, -8)
     hdrAbility:SetText("Ability")
     hdrAbility:SetTextColor(0.7, 0.7, 0.7)
 
+    local hdrShow = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+    hdrShow:SetPoint("LEFT", rosterDivider, "BOTTOMLEFT", 4, -8)
+    hdrShow:SetText("Show")
+    hdrShow:SetTextColor(0.7, 0.7, 0.7)
+
     local hdrDur = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
-    hdrDur:SetPoint("LEFT", hdrAbility, "LEFT", 260, 0)
+    hdrDur:SetPoint("LEFT", hdrAbility, "LEFT", 248, 0)
     hdrDur:SetText("Cooldown (seconds)")
     hdrDur:SetTextColor(0.7, 0.7, 0.7)
 
@@ -224,6 +242,7 @@ local function CreateSettingsPanel()
     -- editBoxes and RefreshAllEditBoxes must be declared here so the OnShow
     -- closure below can reference them (Lua requires locals before use).
     local editBoxes = {}
+    local spellCheckboxes = {}
     local function RefreshAllEditBoxes()
         C_Timer.After(0, function()
             for _, cd in ipairs(CT.COOLDOWNS) do
@@ -240,9 +259,14 @@ local function CreateSettingsPanel()
     panel:SetScript("OnShow", function()
         C_Timer.After(0, function()
             colBox:SetText(tostring(CooldownTrackerDB.columns or 1))
-            local counts = CooldownTrackerDB.classCounts or {}
+            soundCheck:SetChecked(CooldownTrackerDB.playSoundOnReady ~= false)
+            local counts    = CooldownTrackerDB.classCounts or {}
+            local disabled  = CooldownTrackerDB.disabledSpells or {}
             for clsName, box in pairs(classCountBoxes) do
                 box:SetText(tostring(counts[clsName] or 1))
+            end
+            for spellId, cb in pairs(spellCheckboxes) do
+                cb:SetChecked(not disabled[spellId])
             end
             RefreshAllEditBoxes()
         end)
@@ -281,10 +305,26 @@ local function CreateSettingsPanel()
         strip:SetPoint("LEFT", row, "LEFT", 0, 0)
         strip:SetColorTexture(cd.r, cd.g, cd.b, 0.9)
 
+        -- Spell visibility checkbox
+        local spellCB = CreateFrame("CheckButton", "CTSettingsSpell_" .. cd.id, row, "UICheckButtonTemplate")
+        spellCB:SetSize(24, 24)
+        spellCB:SetPoint("LEFT", row, "LEFT", 4, 0)
+        spellCB:SetChecked(not (CooldownTrackerDB.disabledSpells or {})[cd.id])
+        spellCB:SetScript("OnClick", function(self)
+            CooldownTrackerDB.disabledSpells = CooldownTrackerDB.disabledSpells or {}
+            if self:GetChecked() then
+                CooldownTrackerDB.disabledSpells[cd.id] = nil
+            else
+                CooldownTrackerDB.disabledSpells[cd.id] = true
+            end
+            if CT.RebuildUI then CT:RebuildUI() end
+        end)
+        spellCheckboxes[cd.id] = spellCB
+
         -- Icon
         local icon = row:CreateTexture(nil, "ARTWORK")
         icon:SetSize(ICON_SIZE, ICON_SIZE)
-        icon:SetPoint("LEFT", row, "LEFT", 8, 0)
+        icon:SetPoint("LEFT", row, "LEFT", 36, 0)
         icon:SetTexture(cd.icon)
         icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
@@ -304,7 +344,7 @@ local function CreateSettingsPanel()
         -- Duration edit box — built manually to avoid template init issues
         local editBox = CreateFrame("EditBox", "CTSettingsEdit_" .. cd.id, row, "BackdropTemplate")
         editBox:SetSize(EDIT_WIDTH, 24)
-        editBox:SetPoint("LEFT", row, "LEFT", 280, 0)
+        editBox:SetPoint("LEFT", row, "LEFT", 308, 0)
         editBox:SetAutoFocus(false)
         editBox:SetFontObject("ChatFontNormal")
         editBox:SetJustifyH("CENTER")
@@ -329,6 +369,14 @@ local function CreateSettingsPanel()
                 CooldownTrackerDB.customDurations = CooldownTrackerDB.customDurations or {}
                 CooldownTrackerDB.customDurations[cd.id] = (val ~= cd.defaultDuration) and val or nil
                 cd.duration = val
+                if CT.expandedCooldowns then
+                    local prefix = cd.id .. "_"
+                    for _, ecd in ipairs(CT.expandedCooldowns) do
+                        if ecd.id == cd.id or ecd.id:sub(1, #prefix) == prefix then
+                            ecd.duration = val
+                        end
+                    end
+                end
             end
         end
         editBox:SetScript("OnTextChanged", function(self, userInput)

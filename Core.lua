@@ -24,7 +24,14 @@ eventFrame:SetScript("OnEvent", function(_, event, name)
     if event == "ADDON_LOADED" and name == AddonName then
         -- Initialise saved variables
         CooldownTrackerDB = CooldownTrackerDB or {}
-        CooldownTrackerDB.classCounts = CooldownTrackerDB.classCounts or {}
+        CooldownTrackerDB.classCounts     = CooldownTrackerDB.classCounts or {}
+        CooldownTrackerDB.disabledSpells  = CooldownTrackerDB.disabledSpells or {}
+        if CooldownTrackerDB.playSoundOnReady == nil then
+            CooldownTrackerDB.playSoundOnReady = true
+        end
+        if CooldownTrackerDB.frameLocked == nil then
+            CooldownTrackerDB.frameLocked = false
+        end
         -- Register the settings panel (applies saved durations to COOLDOWNS)
         CT:InitSettings()
         -- Expand cooldowns before building UI (so copies inherit saved durations)

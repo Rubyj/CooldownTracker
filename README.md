@@ -2,14 +2,18 @@
 
 A World of Warcraft **Midnight** addon for raid leaders to manually track healer cooldowns.
 
-Because Midnight restricts addons from reading real-time combat data, this addon takes a manual approach: your healers call out on comms, you click a button, and the addon counts down the cooldown for you.
+Because Midnight restricts addons from reading real-time combat data, this addon takes a manual approach: your healers call out on comms, you click a spell row, and the addon counts down the cooldown for you.
 
 ## Features
 
-- One-click timer start/reset per ability
+- Click anywhere on a spell row to start or reset its timer
 - Countdown display (`M:SS`) with colour-coded progress bar (green → yellow → red)
-- Audible alert when a cooldown becomes available
+- Audible alert when a cooldown becomes ready (toggleable)
+- Grid or vertical layout with configurable column count (1–9)
+- Per-spell visibility toggles — hide abilities you're not tracking
+- Lockable window — prevent accidental dragging mid-raid
 - Draggable window with position saved between sessions
+- In-game settings panel (Escape → Options → AddOns → Healer Cooldown Tracker)
 - Tooltips showing cooldown details on hover
 
 ## Installation
@@ -26,10 +30,23 @@ Because Midnight restricts addons from reading real-time combat data, this addon
 |---|---|
 | `/cdt` | Toggle the tracker window |
 | `/cdt reset` | Reset all running timers |
+| `/cdt columns N` | Set grid columns (1–9) |
+| `/cdt settings` | Print reminder to open settings manually |
 
-- Click **Used** when a healer uses an ability → timer starts
-- Click **Reset** to cancel a running timer early
+- Click any spell row to start the cooldown timer
+- Click the same row again to reset a running timer
 - Drag the title bar to reposition; position saves on drag-stop
+- Click the **lock icon** (top-right of title bar) to lock/unlock the window position
+
+## Settings Panel
+
+Open via **Escape → Options → AddOns → Healer Cooldown Tracker**:
+
+- **Columns** — number of grid columns (1 = vertical stack)
+- **Play sound when cooldown is ready** — toggle the audible alert
+- **Class Roster** — set how many of each class are in the raid; abilities duplicate per player (up to 5)
+- **Show checkboxes** — hide individual spells from the tracker
+- **Cooldown durations** — override any ability's cooldown in seconds; revert with the Default button
 
 ## Adding More Cooldowns
 
@@ -37,12 +54,13 @@ Open `Data.lua` and add a new entry to the `CT.COOLDOWNS` table:
 
 ```lua
 {
-    id       = "priest_divine_hymn",  -- unique key
-    class    = "Priest",
-    name     = "Divine Hymn",
-    duration = 180,                   -- seconds
-    icon     = "Interface\\Icons\\spell_holy_divinehymn",
-    r        = 1.0, g = 0.8, b = 0.2, -- accent colour (RGB 0-1)
+    id              = "priest_divine_hymn",  -- unique key
+    class           = "Priest",
+    name            = "Divine Hymn",
+    duration        = 180,                   -- seconds (overrideable in settings)
+    defaultDuration = 180,                   -- used by the "Default" reset button
+    icon            = "Interface\\Icons\\spell_holy_divinehymn",
+    r               = 1.0, g = 1.0, b = 1.0, -- accent colour (RGB 0-1)
 },
 ```
 
@@ -55,7 +73,9 @@ CooldownTracker/
 ├── CooldownTracker.toc   — Addon manifest & metadata
 ├── Data.lua              — Cooldown definitions (edit this to add abilities)
 ├── UI.lua                — Frame, row widgets, timer rendering
+├── Settings.lua          — In-game options panel
 ├── Core.lua              — Init, events, slash commands
+├── AGENTS.md             — AI agent coding guidelines
 └── README.md             — This file
 ```
 
