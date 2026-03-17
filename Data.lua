@@ -118,4 +118,61 @@ CT.COOLDOWNS = {
         icon            = "Interface\\Icons\\spell_deathknight_antimagiczone",
         r               = 0.77, g = 0.12, b = 0.23,
     },
+
+    -- -------------------------------------------------------------------------
+    -- Priest (class colour: white)
+    -- -------------------------------------------------------------------------
+    {
+        id              = "priest_divine_hymn",
+        class           = "Priest",
+        name            = "Divine Hymn",
+        duration        = 180,
+        defaultDuration = 180,
+        icon            = "Interface\\Icons\\spell_holy_divinehymn",
+        r               = 1.0, g = 1.0, b = 1.0,
+    },
+    {
+        id              = "priest_halo",
+        class           = "Priest",
+        name            = "Halo",
+        duration        = 40,
+        defaultDuration = 40,
+        icon            = "Interface\\Icons\\ability_priest_halo",
+        r               = 1.0, g = 1.0, b = 1.0,
+    },
+    {
+        id              = "priest_apotheosis",
+        class           = "Priest",
+        name            = "Apotheosis",
+        duration        = 120,
+        defaultDuration = 120,
+        icon            = "Interface\\Icons\\ability_priest_apotheosis",
+        r               = 1.0, g = 1.0, b = 1.0,
+    },
+
+    -- -------------------------------------------------------------------------
+    -- Demon Hunter (class colour: purple)
+    -- -------------------------------------------------------------------------
+    {
+        id              = "dh_darkness",
+        class           = "Demon Hunter",
+        name            = "Darkness",
+        duration        = 300,
+        defaultDuration = 300,
+        icon            = "Interface\\Icons\\ability_demonhunter_darkness",
+        r               = 0.64, g = 0.19, b = 0.79,
+    },
+
+    -- -------------------------------------------------------------------------
+    -- Evoker (continued)
+    -- -------------------------------------------------------------------------
+    {
+        id              = "evoker_spatial_paradox",
+        class           = "Evoker",
+        name            = "Spatial Paradox",
+        duration        = 180,
+        defaultDuration = 180,
+        icon            = "Interface\\Icons\\ability_evoker_spatialparadox",
+        r               = 0.2, g = 0.58, b = 0.5,
+    },
 }

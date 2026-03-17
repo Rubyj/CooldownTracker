@@ -449,6 +449,47 @@ function CT:BuildUI()
     closeBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -2, -3)
     closeBtn:SetScript("OnClick", function() f:Hide() end)
 
+    -- Lock button
+    local lockBtn = CreateFrame("Button", nil, f)
+    lockBtn:SetSize(14, 14)
+    lockBtn:SetPoint("TOPRIGHT", closeBtn, "TOPLEFT", -2, 0)
+
+    local lockTex = lockBtn:CreateTexture(nil, "ARTWORK")
+    lockTex:SetAllPoints(lockBtn)
+    lockBtn.lockTex = lockTex
+
+    local function UpdateLockVisual()
+        if CooldownTrackerDB.frameLocked then
+            lockTex:SetTexture("Interface\\BUTTONS\\LockButton-Locked-Up")
+            lockTex:SetVertexColor(0.9, 0.7, 0.2)
+        else
+            lockTex:SetTexture("Interface\\BUTTONS\\LockButton-Unlocked-Up")
+            lockTex:SetVertexColor(0.6, 0.6, 0.6)
+        end
+    end
+
+    lockBtn:SetScript("OnClick", function()
+        CooldownTrackerDB.frameLocked = not CooldownTrackerDB.frameLocked
+        f:SetMovable(not CooldownTrackerDB.frameLocked)
+        UpdateLockVisual()
+    end)
+    lockBtn:SetScript("OnEnter", function()
+        GameTooltip:SetOwner(lockBtn, "ANCHOR_BOTTOMLEFT")
+        if CooldownTrackerDB.frameLocked then
+            GameTooltip:SetText("Frame Locked")
+            GameTooltip:AddLine("Click to unlock and allow dragging.", 0.8, 0.8, 0.8)
+        else
+            GameTooltip:SetText("Frame Unlocked")
+            GameTooltip:AddLine("Click to lock the frame in place.", 0.8, 0.8, 0.8)
+        end
+        GameTooltip:Show()
+    end)
+    lockBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    -- Apply saved lock state
+    f:SetMovable(not CooldownTrackerDB.frameLocked)
+    UpdateLockVisual()
+
     -- Divider
     local divider = f:CreateTexture(nil, "ARTWORK")
     divider:SetHeight(1)

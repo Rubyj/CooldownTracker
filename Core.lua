@@ -29,6 +29,9 @@ eventFrame:SetScript("OnEvent", function(_, event, name)
         if CooldownTrackerDB.playSoundOnReady == nil then
             CooldownTrackerDB.playSoundOnReady = true
         end
+        if CooldownTrackerDB.frameLocked == nil then
+            CooldownTrackerDB.frameLocked = false
+        end
         -- Register the settings panel (applies saved durations to COOLDOWNS)
         CT:InitSettings()
         -- Expand cooldowns before building UI (so copies inherit saved durations)
