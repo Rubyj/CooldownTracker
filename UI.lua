@@ -13,8 +13,8 @@ local AddonName, CT = ...
 -- ---------------------------------------------------------------------------
 -- Layout constants
 -- ---------------------------------------------------------------------------
-local TITLE_HEIGHT = 24
-local BOTTOM_PAD   = 8
+local TITLE_HEIGHT = 20
+local BOTTOM_PAD   = 4
 local ROW_PADDING  = 6
 
 -- Wide-row mode (columns = 1)
@@ -22,10 +22,10 @@ local WIDE_ROW_H   = 36
 local WIDE_W       = 300
 local ICON_SIZE    = 28
 -- Card mode (columns ≥ 2)
-local CARD_W       = 72
-local CARD_H       = 68
-local CARD_PAD     = 4
-local CARD_ICON    = 48
+local CARD_W       = 56
+local CARD_H       = 52
+local CARD_PAD     = 3
+local CARD_ICON    = 40
 
 -- ---------------------------------------------------------------------------
 -- Local helpers
@@ -108,11 +108,11 @@ local function ApplyCardLayout(row, cW, cH)
 
     row.iconTex:ClearAllPoints()
     row.iconTex:SetSize(CARD_ICON, CARD_ICON)
-    row.iconTex:SetPoint("CENTER", row, "CENTER", 0, 8)
+    row.iconTex:SetPoint("CENTER", row, "CENTER", 0, 5)
 
     row.timerLabel:ClearAllPoints()
-    row.timerLabel:SetFont("Fonts\\FRIZQT__.TTF", 12, "THICKOUTLINE")
-    row.timerLabel:SetPoint("BOTTOM", row, "BOTTOM", 0, 4)
+    row.timerLabel:SetFont("Fonts\\FRIZQT__.TTF", 11, "THICKOUTLINE")
+    row.timerLabel:SetPoint("BOTTOM", row, "BOTTOM", 0, 3)
 
     row.bar:Hide()
     row.barFill:Hide()
