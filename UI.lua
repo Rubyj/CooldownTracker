@@ -108,7 +108,7 @@ local function ApplyCardLayout(row, cW, cH)
 
     row.iconTex:ClearAllPoints()
     row.iconTex:SetSize(CARD_ICON, CARD_ICON)
-    row.iconTex:SetPoint("CENTER", row, "CENTER", 0, 5)
+    row.iconTex:SetPoint("CENTER", row, "CENTER", 0, 1)
 
     row.timerLabel:ClearAllPoints()
     row.timerLabel:SetFont("Fonts\\FRIZQT__.TTF", 11, "THICKOUTLINE")
