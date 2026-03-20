@@ -377,7 +377,6 @@ end
 -- CreateFrame calls at runtime, which avoids WoW taint errors.
 -- ---------------------------------------------------------------------------
 function CT:RebuildUI()
-    CT.activeTimers = {}
     CT:BuildExpandedCooldowns()
 
     -- Grow the pool if needed (only at first expansion — safe during ADDON_LOADED-like context)
