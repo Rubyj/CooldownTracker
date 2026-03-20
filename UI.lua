@@ -135,7 +135,6 @@ local function ApplyDeadVisuals(row)
     row.iconTex:SetAlpha(0.35)
     row.strip:SetColorTexture(0.3, 0.3, 0.3, 0.9)
     row.bg:SetColorTexture(0.15, 0.15, 0.15, 0.45)
-    row.timerLabel:SetTextColor(0.5, 0.5, 0.5)
     row.nameLabel:SetTextColor(0.5, 0.5, 0.5)
     row.classLabel:SetTextColor(0.5, 0.5, 0.5)
 end
@@ -155,18 +154,19 @@ end
 -- ---------------------------------------------------------------------------
 local function UpdateRow(row, now)
     local cd      = row.cd
+    local dead    = CT.deadStates[cd.id]
     local endTime = CT.activeTimers[cd.id]
 
     if endTime then
         local remaining = endTime - now
         if remaining <= 0 then
             CT.activeTimers[cd.id] = nil
-            row.timerLabel:SetText("|cff00ff00Ready|r")
+            row.timerLabel:SetText(dead and "|cff808080Ready|r" or "|cff00ff00Ready|r")
             if row.isWide then
                 row.barFill:SetWidth(row.bar:GetWidth())
                 row.barFill:SetVertexColor(0.2, 0.9, 0.2)
             end
-            if not CT.deadStates[cd.id] then
+            if not dead then
                 row.iconTex:SetAlpha(1)
             end
             if CooldownTrackerDB.playSoundOnReady ~= false then
@@ -181,10 +181,11 @@ local function UpdateRow(row, now)
                 elseif frac < 0.5  then row.barFill:SetVertexColor(0.9, 0.7, 0.1)
                 else                    row.barFill:SetVertexColor(cd.r, cd.g, cd.b) end
             end
-            row.timerLabel:SetText("|cffff8040" .. FormatTime(remaining) .. "|r")
+            local timeColor = dead and "|cff808080" or "|cffff8040"
+            row.timerLabel:SetText(timeColor .. FormatTime(remaining) .. "|r")
         end
     else
-        row.timerLabel:SetText("|cff00ff00Ready|r")
+        row.timerLabel:SetText(dead and "|cff808080Ready|r" or "|cff00ff00Ready|r")
         if row.isWide then
             row.barFill:SetWidth(row.bar:GetWidth())
             row.barFill:SetVertexColor(0.2, 0.9, 0.2)
