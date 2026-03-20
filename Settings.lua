@@ -483,18 +483,11 @@ local function CreateSettingsPanel()
         editBox:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
         -- ----- Reorder up/down buttons ----------------------------------------
-        local orderLabel = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        orderLabel:SetSize(24, 12)
-        orderLabel:SetPoint("TOPRIGHT", row, "TOPRIGHT", -4, -2)
-        orderLabel:SetJustifyH("CENTER")
-        orderLabel:SetTextColor(0.5, 0.5, 0.5)
-        orderLabels[cd.id] = orderLabel
-
         local upBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
         upBtn:SetSize(24, 18)
-        upBtn:SetPoint("TOPRIGHT", row, "TOPRIGHT", -4, -13)
-        upBtn:SetText("\226\150\178") -- ▲
-        upBtn:GetFontString():SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
+        upBtn:SetPoint("RIGHT", row, "RIGHT", -14, 10)
+        upBtn:SetText("^")
+        upBtn:GetFontString():SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
         upBtn:SetScript("OnClick", function()
             MoveSpell(cd.id, -1, orderLabels)
         end)
@@ -508,9 +501,9 @@ local function CreateSettingsPanel()
 
         local downBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
         downBtn:SetSize(24, 18)
-        downBtn:SetPoint("TOP", upBtn, "BOTTOM", 0, -2)
-        downBtn:SetText("\226\150\188") -- ▼
-        downBtn:GetFontString():SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
+        downBtn:SetPoint("RIGHT", row, "RIGHT", -14, -10)
+        downBtn:SetText("v")
+        downBtn:GetFontString():SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
         downBtn:SetScript("OnClick", function()
             MoveSpell(cd.id, 1, orderLabels)
         end)
@@ -521,6 +514,13 @@ local function CreateSettingsPanel()
             GameTooltip:Show()
         end)
         downBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+        local orderLabel = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        orderLabel:SetSize(18, 14)
+        orderLabel:SetPoint("RIGHT", upBtn, "LEFT", -2, 0)
+        orderLabel:SetJustifyH("CENTER")
+        orderLabel:SetTextColor(0.5, 0.5, 0.5)
+        orderLabels[cd.id] = orderLabel
     end
 
     -- ----- Reset All button -------------------------------------------------
