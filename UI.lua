@@ -10,6 +10,11 @@
 
 local AddonName, CT = ...
 
+-- Runtime dead-state table: keyed by cd.id, true = player is dead.
+-- Not persisted (deaths are per-session only). Initialised here so
+-- UpdateRow can reference it before CT:BuildUI() is called.
+CT.deadStates = {}
+
 -- ---------------------------------------------------------------------------
 -- Layout constants
 -- ---------------------------------------------------------------------------
@@ -123,6 +128,24 @@ local function ApplyCardLayout(row, cW, cH)
 end
 
 -- ---------------------------------------------------------------------------
+-- Dead-state visual helpers
+-- ---------------------------------------------------------------------------
+local function ApplyDeadVisuals(row)
+    row.iconTex:SetDesaturated(true)
+    row.iconTex:SetAlpha(0.35)
+    row.strip:SetColorTexture(0.3, 0.3, 0.3, 0.9)
+    row.bg:SetColorTexture(0.15, 0.15, 0.15, 0.45)
+end
+
+local function ClearDeadVisuals(row)
+    local cd = row.cd
+    row.iconTex:SetDesaturated(false)
+    row.iconTex:SetAlpha(1)
+    row.strip:SetColorTexture(cd.r, cd.g, cd.b, 0.9)
+    row.bg:SetColorTexture(0, 0, 0, 0.20)
+end
+
+-- ---------------------------------------------------------------------------
 -- Row update   (called every OnUpdate tick)
 -- ---------------------------------------------------------------------------
 local function UpdateRow(row, now)
@@ -138,7 +161,9 @@ local function UpdateRow(row, now)
                 row.barFill:SetWidth(row.bar:GetWidth())
                 row.barFill:SetVertexColor(0.2, 0.9, 0.2)
             end
-            row.iconTex:SetAlpha(1)
+            if not CT.deadStates[cd.id] then
+                row.iconTex:SetAlpha(1)
+            end
             if CooldownTrackerDB.playSoundOnReady ~= false then
                 PlaySound(SOUNDKIT.ALARM_CLOCK_WARNING_3)
             end
@@ -160,6 +185,11 @@ local function UpdateRow(row, now)
             row.barFill:SetVertexColor(0.2, 0.9, 0.2)
         end
     end
+
+    -- Re-apply dead visuals each tick so they survive timer transitions.
+    if CT.deadStates[cd.id] then
+        ApplyDeadVisuals(row)
+    end
 end
 
 -- ---------------------------------------------------------------------------
@@ -168,7 +198,7 @@ end
 local function CreateRow(parent, cd)
     local row = CreateFrame("Button", nil, parent)
     row.cd = cd
-    row:RegisterForClicks("LeftButtonUp")
+    row:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 
     local bg = row:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(row)
@@ -213,14 +243,24 @@ local function CreateRow(parent, cd)
     btn:Hide()
     row.button = btn
 
-    row:SetScript("OnClick", function()
+    row:SetScript("OnClick", function(self, button)
         local mycd = row.cd
-        if CT.activeTimers[mycd.id] then
-            CT.activeTimers[mycd.id] = nil
+        if button == "RightButton" then
+            if CT.deadStates[mycd.id] then
+                CT.deadStates[mycd.id] = nil
+                ClearDeadVisuals(row)
+            else
+                CT.deadStates[mycd.id] = true
+                ApplyDeadVisuals(row)
+            end
         else
-            CT.activeTimers[mycd.id] = GetTime() + mycd.duration
+            if CT.activeTimers[mycd.id] then
+                CT.activeTimers[mycd.id] = nil
+            else
+                CT.activeTimers[mycd.id] = GetTime() + mycd.duration
+            end
+            UpdateRow(row, GetTime())
         end
-        UpdateRow(row, GetTime())
     end)
 
     row:SetScript("OnEnter", function()
@@ -244,6 +284,11 @@ local function CreateRow(parent, cd)
         else
             GameTooltip:AddLine("Click to start the cooldown timer.", 1, 0.8, 0)
         end
+        if CT.deadStates[mycd.id] then
+            GameTooltip:AddLine("|cffaaaaaa[Dead]|r Right-click to mark |cff00ff00alive|r (battle rez).", 0.8, 0.8, 0.8)
+        else
+            GameTooltip:AddLine("Right-click to mark |cffff4040dead|r.", 0.8, 0.8, 0.8)
+        end
         GameTooltip:Show()
     end)
     row:SetScript("OnLeave", function()
@@ -260,12 +305,40 @@ end
 -- Populates CT.expandedCooldowns from CT.COOLDOWNS + class counts.
 --   count=1: original entry unchanged (no "#N" suffix)
 --   count>1: N copies with unique IDs and "#N" appended to name
+-- Applies CooldownTrackerDB.spellOrder to sort the base spell list before
+-- expansion. Spells absent from the saved order appear at the end in their
+-- default order.
 -- ---------------------------------------------------------------------------
 function CT:BuildExpandedCooldowns()
     local counts   = CooldownTrackerDB.classCounts or {}
     local disabled = CooldownTrackerDB.disabledSpells or {}
-    CT.expandedCooldowns = {}
+    local order    = CooldownTrackerDB.spellOrder or {}
+
+    -- Build a position lookup from the saved order array.
+    local orderPos = {}
+    for pos, id in ipairs(order) do
+        orderPos[id] = pos
+    end
+
+    -- Sort a copy of CT.COOLDOWNS according to saved order.
+    local sorted = {}
     for _, cd in ipairs(CT.COOLDOWNS) do
+        table.insert(sorted, cd)
+    end
+    table.sort(sorted, function(a, b)
+        local pa = orderPos[a.id] or (1000 + #sorted)
+        local pb = orderPos[b.id] or (1000 + #sorted)
+        if pa ~= pb then return pa < pb end
+        -- Preserve relative default order for ties (spells not in saved order).
+        for _, cd in ipairs(CT.COOLDOWNS) do
+            if cd.id == a.id then return true end
+            if cd.id == b.id then return false end
+        end
+        return false
+    end)
+
+    CT.expandedCooldowns = {}
+    for _, cd in ipairs(sorted) do
         if not disabled[cd.id] then
             local count = math.max(1, math.min(5, counts[cd.class] or 1))
             if count == 1 then
@@ -305,6 +378,10 @@ function CT:RebuildUI()
         local row = CT.pool[i]
         row:Show()
         row.cd = cd
+        -- Reset any lingering dead visuals before applying the new cd.
+        row.iconTex:SetDesaturated(false)
+        row.iconTex:SetAlpha(1)
+        row.bg:SetColorTexture(0, 0, 0, 0.20)
         row.strip:SetColorTexture(cd.r, cd.g, cd.b, 0.9)
         row.iconTex:SetTexture(cd.icon)
         row.nameLabel:SetText(cd.name)

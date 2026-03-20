@@ -64,6 +64,7 @@ Also update `## Version:` in `CooldownTracker.toc` to match the tag before taggi
    | `playSoundOnReady` | boolean | `true` | Play alert sound on cooldown expiry |
    | `frameLocked` | boolean | `false` | Lock window position (disable drag) |
    | `point`, `relPoint`, `x`, `y` | mixed | nil | Saved window position |
+   | `spellOrder` | table | `{}` | Ordered array of spell `id` strings defining tracker display order; empty = default |
 3. **Slash Commands:** Register slash commands via the `SlashCmdList` table. Handle arguments cleanly.
 4. **No Third-Party Libraries:** The addon intentionally does not use Ace3 or other framework libraries to remain lightweight. Rely on the standard WoW API.
 

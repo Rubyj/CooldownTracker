@@ -29,6 +29,52 @@ local function ApplyCustomDurations()
     end
 end
 
+-- Ensures spellOrder is fully populated from the default CT.COOLDOWNS order,
+-- then moves the spell with the given id by `delta` positions (-1 = up, +1 = down).
+-- Refreshes the tracker and updates the provided order-indicator labels table.
+local function MoveSpell(id, delta, labels)
+    local order = CooldownTrackerDB.spellOrder
+    if not order then return end
+
+    -- Populate from defaults if empty.
+    if #order == 0 then
+        for _, cd in ipairs(CT.COOLDOWNS) do
+            table.insert(order, cd.id)
+        end
+    end
+
+    -- Ensure every known spell is represented (handles newly added spells).
+    local inOrder = {}
+    for _, sid in ipairs(order) do inOrder[sid] = true end
+    for _, cd in ipairs(CT.COOLDOWNS) do
+        if not inOrder[cd.id] then
+            table.insert(order, cd.id)
+        end
+    end
+
+    local pos = nil
+    for i, sid in ipairs(order) do
+        if sid == id then pos = i; break end
+    end
+    if not pos then return end
+
+    local newPos = pos + delta
+    if newPos < 1 or newPos > #order then return end
+    order[pos], order[newPos] = order[newPos], order[pos]
+    CooldownTrackerDB.spellOrder = order
+
+    if CT.RebuildUI then CT:RebuildUI() end
+
+    -- Refresh position indicators in the settings panel.
+    if labels then
+        local posMap = {}
+        for i, sid in ipairs(order) do posMap[sid] = i end
+        for spellId, lbl in pairs(labels) do
+            lbl:SetText(tostring(posMap[spellId] or ""))
+        end
+    end
+end
+
 -- ---------------------------------------------------------------------------
 -- Panel construction
 -- ---------------------------------------------------------------------------
@@ -239,10 +285,32 @@ local function CreateSettingsPanel()
     divider:SetWidth(CONTENT_WIDTH)
     divider:SetColorTexture(0.3, 0.3, 0.4, 0.6)
 
-    -- editBoxes and RefreshAllEditBoxes must be declared here so the OnShow
-    -- closure below can reference them (Lua requires locals before use).
+    -- editBoxes, spellCheckboxes, and orderLabels must be declared here so the
+    -- OnShow closure below can reference them (Lua requires locals before use).
     local editBoxes = {}
     local spellCheckboxes = {}
+    local orderLabels = {}
+
+    local function GetEffectiveOrderPos()
+        local order = CooldownTrackerDB.spellOrder or {}
+        local posMap = {}
+        if #order == 0 then
+            for i, cd in ipairs(CT.COOLDOWNS) do posMap[cd.id] = i end
+        else
+            for i, sid in ipairs(order) do posMap[sid] = i end
+        end
+        return posMap
+    end
+
+    local function RefreshOrderIndicators()
+        C_Timer.After(0, function()
+            local posMap = GetEffectiveOrderPos()
+            for spellId, lbl in pairs(orderLabels) do
+                lbl:SetText(tostring(posMap[spellId] or ""))
+            end
+        end)
+    end
+
     local function RefreshAllEditBoxes()
         C_Timer.After(0, function()
             for _, cd in ipairs(CT.COOLDOWNS) do
@@ -269,6 +337,7 @@ local function CreateSettingsPanel()
                 cb:SetChecked(not disabled[spellId])
             end
             RefreshAllEditBoxes()
+            RefreshOrderIndicators()
         end)
     end)
 
@@ -412,6 +481,50 @@ local function CreateSettingsPanel()
             GameTooltip:Show()
         end)
         editBox:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+        -- ----- Reorder up/down buttons ----------------------------------------
+        local orderLabel = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        orderLabel:SetSize(20, 14)
+        orderLabel:SetPoint("TOP", row, "TOPRIGHT", -24, -3)
+        orderLabel:SetJustifyH("CENTER")
+        orderLabel:SetTextColor(0.6, 0.6, 0.6)
+        orderLabels[cd.id] = orderLabel
+
+        local upBtn = CreateFrame("Button", nil, row)
+        upBtn:SetSize(22, 15)
+        upBtn:SetPoint("TOP", row, "TOPRIGHT", -24, -16)
+        local upTex = upBtn:CreateTexture(nil, "ARTWORK")
+        upTex:SetAllPoints(upBtn)
+        upTex:SetTexture("Interface\\Buttons\\UI-ScrollBar-ScrollUpButton-Up")
+        upTex:SetTexCoord(0.15, 0.85, 0.15, 0.85)
+        upBtn:SetScript("OnClick", function()
+            MoveSpell(cd.id, -1, orderLabels)
+        end)
+        upBtn:SetScript("OnEnter", function()
+            GameTooltip:SetOwner(upBtn, "ANCHOR_RIGHT")
+            GameTooltip:SetText("Move Up")
+            GameTooltip:AddLine("Move this spell earlier in the tracker.", 0.8, 0.8, 0.8)
+            GameTooltip:Show()
+        end)
+        upBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+        local downBtn = CreateFrame("Button", nil, row)
+        downBtn:SetSize(22, 15)
+        downBtn:SetPoint("BOTTOM", row, "BOTTOMRIGHT", -24, 16)
+        local downTex = downBtn:CreateTexture(nil, "ARTWORK")
+        downTex:SetAllPoints(downBtn)
+        downTex:SetTexture("Interface\\Buttons\\UI-ScrollBar-ScrollDownButton-Up")
+        downTex:SetTexCoord(0.15, 0.85, 0.15, 0.85)
+        downBtn:SetScript("OnClick", function()
+            MoveSpell(cd.id, 1, orderLabels)
+        end)
+        downBtn:SetScript("OnEnter", function()
+            GameTooltip:SetOwner(downBtn, "ANCHOR_RIGHT")
+            GameTooltip:SetText("Move Down")
+            GameTooltip:AddLine("Move this spell later in the tracker.", 0.8, 0.8, 0.8)
+            GameTooltip:Show()
+        end)
+        downBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
     end
 
     -- ----- Reset All button -------------------------------------------------
@@ -429,6 +542,25 @@ local function CreateSettingsPanel()
         end
         print("|cffaaddff[CooldownTracker]|r All durations reset to defaults.")
     end)
+
+    -- ----- Reset Order button -----------------------------------------------
+    local resetOrderBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    resetOrderBtn:SetSize(100, 26)
+    resetOrderBtn:SetPoint("LEFT", resetAllBtn, "RIGHT", 8, 0)
+    resetOrderBtn:SetText("Reset Order")
+    resetOrderBtn:SetScript("OnClick", function()
+        CooldownTrackerDB.spellOrder = {}
+        if CT.RebuildUI then CT:RebuildUI() end
+        RefreshOrderIndicators()
+        print("|cffaaddff[CooldownTracker]|r Spell order reset to defaults.")
+    end)
+    resetOrderBtn:SetScript("OnEnter", function()
+        GameTooltip:SetOwner(resetOrderBtn, "ANCHOR_TOP")
+        GameTooltip:SetText("Reset Spell Order")
+        GameTooltip:AddLine("Restores the default display order for all spells.", 0.8, 0.8, 0.8)
+        GameTooltip:Show()
+    end)
+    resetOrderBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
     return panel
 end
