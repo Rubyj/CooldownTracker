@@ -135,6 +135,9 @@ local function ApplyDeadVisuals(row)
     row.iconTex:SetAlpha(0.35)
     row.strip:SetColorTexture(0.3, 0.3, 0.3, 0.9)
     row.bg:SetColorTexture(0.15, 0.15, 0.15, 0.45)
+    row.timerLabel:SetTextColor(0.5, 0.5, 0.5)
+    row.nameLabel:SetTextColor(0.5, 0.5, 0.5)
+    row.classLabel:SetTextColor(0.5, 0.5, 0.5)
 end
 
 local function ClearDeadVisuals(row)
@@ -143,6 +146,8 @@ local function ClearDeadVisuals(row)
     row.iconTex:SetAlpha(1)
     row.strip:SetColorTexture(cd.r, cd.g, cd.b, 0.9)
     row.bg:SetColorTexture(0, 0, 0, 0.20)
+    row.nameLabel:SetTextColor(1, 1, 1)
+    row.classLabel:SetTextColor(cd.r, cd.g, cd.b)
 end
 
 -- ---------------------------------------------------------------------------
