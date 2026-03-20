@@ -314,10 +314,18 @@ function CT:BuildExpandedCooldowns()
     local disabled = CooldownTrackerDB.disabledSpells or {}
     local order    = CooldownTrackerDB.spellOrder or {}
 
-    -- Build a position lookup from the saved order array.
+    -- Build a set of valid spell IDs so we can prune stale saved-order entries.
+    local knownIds = {}
+    for _, cd in ipairs(CT.COOLDOWNS) do knownIds[cd.id] = true end
+
+    -- Build a position lookup from the saved order array, ignoring stale IDs.
     local orderPos = {}
-    for pos, id in ipairs(order) do
-        orderPos[id] = pos
+    local cleanPos = 1
+    for _, id in ipairs(order) do
+        if knownIds[id] then
+            orderPos[id] = cleanPos
+            cleanPos = cleanPos + 1
+        end
     end
 
     -- Sort a copy of CT.COOLDOWNS according to saved order.
@@ -329,6 +337,7 @@ function CT:BuildExpandedCooldowns()
         local pa = orderPos[a.id] or (1000 + #sorted)
         local pb = orderPos[b.id] or (1000 + #sorted)
         if pa ~= pb then return pa < pb end
+        if a.id == b.id then return false end
         -- Preserve relative default order for ties (spells not in saved order).
         for _, cd in ipairs(CT.COOLDOWNS) do
             if cd.id == a.id then return true end
