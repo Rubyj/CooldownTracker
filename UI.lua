@@ -402,7 +402,9 @@ function CT:RebuildUI()
         row.nameLabel:SetTextColor(1, 1, 1)
         row.classLabel:SetText(cd.class)
         row.classLabel:SetTextColor(cd.r, cd.g, cd.b)
-        row.timerLabel:SetText("|cff00ff00Ready|r")
+        -- timerLabel text is intentionally not set here: UpdateRow will
+        -- write the correct text (with active-timer or dead-state colors)
+        -- on the very next OnUpdate tick, avoiding a one-frame "Ready" flash.
         row.barFill:SetVertexColor(cd.r, cd.g, cd.b)
     end
 

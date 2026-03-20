@@ -43,14 +43,23 @@ local function MoveSpell(id, delta, labels)
         end
     end
 
-    -- Ensure every known spell is represented (handles newly added spells).
-    local inOrder = {}
-    for _, sid in ipairs(order) do inOrder[sid] = true end
-    for _, cd in ipairs(CT.COOLDOWNS) do
-        if not inOrder[cd.id] then
-            table.insert(order, cd.id)
-        end
+    -- Build known-ID set, then rebuild order: remove stale IDs and append any missing ones.
+    local knownIds = {}
+    for _, cd in ipairs(CT.COOLDOWNS) do knownIds[cd.id] = true end
+
+    local pruned = {}
+    for _, sid in ipairs(order) do
+        if knownIds[sid] then table.insert(pruned, sid) end
     end
+    for _, cd in ipairs(CT.COOLDOWNS) do
+        local found = false
+        for _, sid in ipairs(pruned) do
+            if sid == cd.id then found = true; break end
+        end
+        if not found then table.insert(pruned, cd.id) end
+    end
+    order = pruned
+    CooldownTrackerDB.spellOrder = order
 
     local pos = nil
     for i, sid in ipairs(order) do
