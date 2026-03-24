@@ -26,6 +26,7 @@ eventFrame:SetScript("OnEvent", function(_, event, name)
         CooldownTrackerDB = CooldownTrackerDB or {}
         CooldownTrackerDB.classCounts     = CooldownTrackerDB.classCounts or {}
         CooldownTrackerDB.disabledSpells  = CooldownTrackerDB.disabledSpells or {}
+        CooldownTrackerDB.spellOrder      = CooldownTrackerDB.spellOrder or {}
         if CooldownTrackerDB.playSoundOnReady == nil then
             CooldownTrackerDB.playSoundOnReady = true
         end
@@ -53,6 +54,8 @@ SlashCmdList["COOLDOWNTRACKER"] = function(msg)
         for _, cd in ipairs(CT.expandedCooldowns) do
             CT.activeTimers[cd.id] = nil
         end
+        CT.deadStates = {}
+        CT:UpdateAllRows()
         print("|cffaaddff[CooldownTracker]|r All timers reset.")
     elseif cmd == "settings" then
         CT:OpenSettings()
