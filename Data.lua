@@ -35,15 +35,6 @@ CT.COOLDOWNS = {
         icon            = "Interface\\Icons\\spell_nature_tranquility",
         r               = 1.0, g = 0.49, b = 0.04,
     },
-    {
-        id              = "druid_innervate",
-        class           = "Druid",
-        name            = "Innervate",
-        duration        = 180,
-        defaultDuration = 180,
-        icon            = "Interface\\Icons\\spell_nature_lightning",
-        r               = 1.0, g = 0.49, b = 0.04,
-    },
 
     -- -------------------------------------------------------------------------
     -- Paladin (class colour: pink)

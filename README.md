@@ -7,17 +7,14 @@ Because Midnight restricts addons from reading real-time combat data, this addon
 ## Features
 
 - Click anywhere on a spell row to start or reset its timer
-- Right-click a spell row to mark a player as dead (row goes grey); right-click again to restore (battle rez)
 - Countdown display (`M:SS`) with colour-coded progress bar (green → yellow → red)
 - Audible alert when a cooldown becomes ready (toggleable)
 - Grid or vertical layout with configurable column count (1–9)
-- Reorderable spells — use ▲/▼ arrows in the settings panel to set any display order
 - Per-spell visibility toggles — hide abilities you're not tracking
 - Lockable window — prevent accidental dragging mid-raid
 - Draggable window with position saved between sessions
 - In-game settings panel (Escape → Options → AddOns → Healer Cooldown Tracker)
 - Tooltips showing cooldown details on hover
-- Tracks Druid cooldowns: Convoke the Spirits, Tranquility, Innervate
 
 ## Installation
 
@@ -45,7 +42,6 @@ Clone the repo and symlink (or copy) the folder directly into your AddOns direct
 
 - Click any spell row to start the cooldown timer
 - Click the same row again to reset a running timer
-- Right-click any spell row to mark the player as **dead** (row goes grey, timer keeps running); right-click again to restore (battle rez)
 - Drag the title bar to reposition; position saves on drag-stop
 - Click the **lock icon** (top-right of title bar) to lock/unlock the window position
 
@@ -57,7 +53,6 @@ Open via **Escape → Options → AddOns → Healer Cooldown Tracker**:
 - **Play sound when cooldown is ready** — toggle the audible alert
 - **Class Roster** — set how many of each class are in the raid; abilities duplicate per player (up to 5)
 - **Show checkboxes** — hide individual spells from the tracker
-- **Spell order** — use ▲/▼ arrows next to each spell to reorder them; Reset Order restores the default sequence
 - **Cooldown durations** — override any ability's cooldown in seconds; revert with the Default button
 
 ## Adding More Cooldowns
