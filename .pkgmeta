@@ -1,4 +1,5 @@
 package-as: CooldownTracker
+curse-project-id: 1513609
 
 ignore:
   - .github
