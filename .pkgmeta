@@ -6,3 +6,6 @@ ignore:
   - .luacheckrc
   - .pkgmeta
   - AGENTS.md
+  - LICENSE
+  - curseforge_logo.png
+  - curseforge_description.md
