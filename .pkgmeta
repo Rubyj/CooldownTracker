@@ -1,4 +1,5 @@
 package-as: CooldownTracker
+curse-project-id: 1513609
 
 ignore:
   - .github
@@ -6,3 +7,6 @@ ignore:
   - .luacheckrc
   - .pkgmeta
   - AGENTS.md
+  - LICENSE
+  - curseforge_logo.png
+  - curseforge_description.md
