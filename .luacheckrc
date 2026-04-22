@@ -26,6 +26,7 @@ read_globals = {
     "UIParent",
     "GameTooltip",
     -- Namespaces
+    "C_Spell",
     "C_Timer",
     "Settings",
 }
