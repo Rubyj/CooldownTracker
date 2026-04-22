@@ -130,6 +130,7 @@ CT.COOLDOWNS = {
         duration        = 180,
         defaultDuration = 180,
         icon            = "Interface\\Icons\\spell_monk_revival",
+        spellId         = 115310,
         r               = 0.0, g = 1.0, b = 0.59,
     },
     {
@@ -138,7 +139,8 @@ CT.COOLDOWNS = {
         name            = "Celestial Conduit",
         duration        = 90,
         defaultDuration = 90,
-        icon            = "Interface\\Icons\\ability_monk_celestialconduit",
+        icon            = "Interface\\Icons\\ability_monk_conduit_of_the_celestials",
+        spellId         = 443028,
         r               = 0.0, g = 1.0, b = 0.59,
     },
     {
@@ -147,7 +149,8 @@ CT.COOLDOWNS = {
         name            = "Invoke Yu'lon",
         duration        = 120,
         defaultDuration = 120,
-        icon            = "Interface\\Icons\\ability_monk_dragonfire",
+        icon            = "Interface\\Icons\\ability_monk_invokeyulon",
+        spellId         = 322118,
         r               = 0.0, g = 1.0, b = 0.59,
     },
 
@@ -212,3 +215,21 @@ CT.COOLDOWNS = {
         r               = 0.2, g = 0.58, b = 0.5,
     },
 }
+
+--------------------------------------------------------------------------------
+-- CT:ResolveIcons()
+-- Called once at ADDON_LOADED time.  For any cooldown entry that carries a
+-- spellId, we ask the WoW client for the real icon FileID and overwrite the
+-- string icon path.  This ensures newer spells (which lack traditional
+-- Interface\Icons\ string paths) display correctly.
+--------------------------------------------------------------------------------
+function CT:ResolveIcons()
+    for _, cd in ipairs(CT.COOLDOWNS) do
+        if cd.spellId and C_Spell and C_Spell.GetSpellTexture then
+            local tex = C_Spell.GetSpellTexture(cd.spellId)
+            if tex then
+                cd.icon = tex
+            end
+        end
+    end
+end
