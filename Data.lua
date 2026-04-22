@@ -138,7 +138,7 @@ CT.COOLDOWNS = {
         name            = "Celestial Conduit",
         duration        = 90,
         defaultDuration = 90,
-        icon            = "Interface\\Icons\\ability_monk_celestialconduit",
+        icon            = "Interface\\Icons\\ability_monk_conduit_of_the_celestials",
         r               = 0.0, g = 1.0, b = 0.59,
     },
     {
@@ -147,7 +147,7 @@ CT.COOLDOWNS = {
         name            = "Invoke Yu'lon",
         duration        = 120,
         defaultDuration = 120,
-        icon            = "Interface\\Icons\\ability_monk_dragonfire",
+        icon            = "Interface\\Icons\\ability_monk_invokeyulon",
         r               = 0.0, g = 1.0, b = 0.59,
     },
 
