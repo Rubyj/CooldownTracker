@@ -121,6 +121,37 @@ CT.COOLDOWNS = {
     },
 
     -- -------------------------------------------------------------------------
+    -- Monk (class colour: jade green)
+    -- -------------------------------------------------------------------------
+    {
+        id              = "monk_revival",
+        class           = "Monk",
+        name            = "Revival",
+        duration        = 180,
+        defaultDuration = 180,
+        icon            = "Interface\\Icons\\spell_monk_revival",
+        r               = 0.0, g = 1.0, b = 0.59,
+    },
+    {
+        id              = "monk_celestial_conduit",
+        class           = "Monk",
+        name            = "Celestial Conduit",
+        duration        = 90,
+        defaultDuration = 90,
+        icon            = "Interface\\Icons\\ability_monk_celestialconduit",
+        r               = 0.0, g = 1.0, b = 0.59,
+    },
+    {
+        id              = "monk_yulon",
+        class           = "Monk",
+        name            = "Invoke Yu'lon",
+        duration        = 120,
+        defaultDuration = 120,
+        icon            = "Interface\\Icons\\ability_monk_dragonfire",
+        r               = 0.0, g = 1.0, b = 0.59,
+    },
+
+    -- -------------------------------------------------------------------------
     -- Warrior (class colour: tan/gold)
     -- -------------------------------------------------------------------------
     {
