@@ -2,7 +2,7 @@
 ## Title: Healer Cooldown Tracker
 ## Notes: Manually track healer cooldowns for raid leaders. Click to start a timer when a healer calls out on comms.
 ## Author: Reube
-## Version: 1.7.0
+## Version: 1.7.1
 ## SavedVariables: CooldownTrackerDB
 
 Data.lua
