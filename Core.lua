@@ -33,6 +33,8 @@ eventFrame:SetScript("OnEvent", function(_, event, name)
         if CooldownTrackerDB.frameLocked == nil then
             CooldownTrackerDB.frameLocked = false
         end
+        -- Resolve spell icons (replaces string paths with FileIDs where possible)
+        CT:ResolveIcons()
         -- Register the settings panel (applies saved durations to COOLDOWNS)
         CT:InitSettings()
         -- Expand cooldowns before building UI (so copies inherit saved durations)
