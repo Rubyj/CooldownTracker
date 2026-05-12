@@ -214,6 +214,26 @@ CT.COOLDOWNS = {
         icon            = "Interface\\Icons\\ability_evoker_spatialparadox",
         r               = 0.2, g = 0.58, b = 0.5,
     },
+    {
+        id              = "evoker_rewind",
+        class           = "Evoker",
+        name            = "Rewind",
+        duration        = 240,
+        defaultDuration = 240,
+        icon            = "Interface\\Icons\\spell_evoker_rewind",
+        spellId         = 363534,
+        r               = 0.2, g = 0.58, b = 0.5,
+    },
+    {
+        id              = "evoker_dream_flight",
+        class           = "Evoker",
+        name            = "Dream Flight",
+        duration        = 120,
+        defaultDuration = 120,
+        icon            = "Interface\\Icons\\spell_evoker_dreamflight",
+        spellId         = 363502,
+        r               = 0.2, g = 0.58, b = 0.5,
+    },
 }
 
 --------------------------------------------------------------------------------
