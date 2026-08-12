@@ -10,7 +10,7 @@ _Describe how to verify this in-game, or note if the change is non-functional (C
 
 # Checklist
 
-- [ ] Tested in-game on Midnight (Interface 120001)
+- [ ] Tested in-game on Midnight (Interface 120100)
 - [ ] No new global variables introduced (or `.luacheckrc` updated if needed)
 - [ ] No taint-unsafe patterns introduced (no runtime `CreateFrame`, `SetParent`, or `SetScript` on secure frames)
 - [ ] `Data.lua` spell entries include both `duration` and `defaultDuration`

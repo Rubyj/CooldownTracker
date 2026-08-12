@@ -114,4 +114,4 @@ The zip will appear on the [Releases](../../releases) page within a minute or tw
 
 ## Compatibility
 
-Tested on **World of Warcraft: Midnight** (Interface 120001). Fully compliant with Midnight's addon restrictions — no combat log reading, no addon messaging.
+Tested on **World of Warcraft: Midnight** (Interface 120100). Fully compliant with Midnight's addon restrictions — no combat log reading, no addon messaging.
