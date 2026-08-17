@@ -49,4 +49,4 @@ Open `Data.lua` and add a new entry to the cooldowns table — no other file nee
 
 ---
 
-*Fully compatible with World of Warcraft: Midnight (Interface 120001). Zero automation — 100% Blizzard ToS compliant.*
+*Fully compatible with World of Warcraft: Midnight (Interface 120100). Zero automation — 100% Blizzard ToS compliant.*
